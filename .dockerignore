@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node / Expo
+node_modules/
+.expo/
+.metro-cache/
+frontend/.metro-cache/
+
+# Environment
+.env
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.pytest_cache/
+test_reports/
+
+# IDE
+.idea/
+.vscode/

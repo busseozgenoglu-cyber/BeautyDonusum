@@ -24,15 +24,24 @@ logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).parent
 
+for _required in ('MONGO_URL', 'JWT_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD'):
+    if not os.environ.get(_required):
+        raise RuntimeError(f"Required environment variable '{_required}' is not set")
+
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'test_database')]
 
-JWT_SECRET = os.environ.get('JWT_SECRET')
+JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = "HS256"
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+ADMIN_EMAIL = os.environ['ADMIN_EMAIL']
+ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
+
+_cors_env = os.environ.get('CORS_ORIGINS', '')
+CORS_ORIGINS: list = [o.strip() for o in _cors_env.split(',') if o.strip()] or ["*"]
+if CORS_ORIGINS == ["*"]:
+    logger.warning("CORS_ORIGINS is not set – all origins are allowed. Set CORS_ORIGINS for production.")
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -382,7 +391,12 @@ async def update_language(data: LanguagePref, request: Request):
 
 @api_router.get("/health")
 async def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+    try:
+        await db.command("ping")
+        db_status = "connected"
+    except Exception:
+        db_status = "unavailable"
+    return {"status": "ok", "db": db_status, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # ==================== APP SETUP ====================
 
@@ -390,7 +404,7 @@ app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -398,43 +412,52 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("user_id", unique=True)
-    await db.analyses.create_index("analysis_id", unique=True)
-    await db.analyses.create_index("user_id")
+    try:
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("user_id", unique=True)
+        await db.analyses.create_index("analysis_id", unique=True)
+        await db.analyses.create_index("user_id")
+        logger.info("Database indexes ensured")
+    except Exception as e:
+        logger.error(f"Failed to create database indexes: {e}")
+        raise
 
     # Seed admin
-    existing = await db.users.find_one({"email": ADMIN_EMAIL})
-    if not existing:
-        await db.users.insert_one({
-            "user_id": f"user_{uuid.uuid4().hex[:12]}",
-            "email": ADMIN_EMAIL,
-            "name": "Admin",
-            "password_hash": hash_password(ADMIN_PASSWORD),
-            "role": "admin",
-            "subscription": "premium",
-            "analyses_count": 0,
-            "language": "tr",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        logger.info(f"Admin user seeded: {ADMIN_EMAIL}")
-    elif not verify_password(ADMIN_PASSWORD, existing.get("password_hash", "")):
-        await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
-        logger.info("Admin password updated")
+    try:
+        existing = await db.users.find_one({"email": ADMIN_EMAIL})
+        if not existing:
+            await db.users.insert_one({
+                "user_id": f"user_{uuid.uuid4().hex[:12]}",
+                "email": ADMIN_EMAIL,
+                "name": "Admin",
+                "password_hash": hash_password(ADMIN_PASSWORD),
+                "role": "admin",
+                "subscription": "premium",
+                "analyses_count": 0,
+                "language": "tr",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            logger.info(f"Admin user seeded: {ADMIN_EMAIL}")
+        elif not verify_password(ADMIN_PASSWORD, existing.get("password_hash", "")):
+            await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
+            logger.info("Admin password updated")
+    except Exception as e:
+        logger.error(f"Failed to seed admin user: {e}")
 
-    # Write test credentials
-    creds_path = Path("/app/memory/test_credentials.md")
-    creds_path.parent.mkdir(parents=True, exist_ok=True)
-    creds_path.write_text(f"""# Test Credentials
+    # Write test credentials (passwords are NOT written to disk)
+    try:
+        creds_path = Path("/app/memory/test_credentials.md")
+        creds_path.parent.mkdir(parents=True, exist_ok=True)
+        creds_path.write_text(f"""# Test Credentials
 ## Admin
 - Email: {ADMIN_EMAIL}
-- Password: {ADMIN_PASSWORD}
+- Password: (see ADMIN_PASSWORD environment variable)
 - Role: admin
 - Subscription: premium
 
 ## Test User
 - Email: test@faceglow.com
-- Password: test123
+- Password: (set via API)
 - Role: user
 
 ## Auth Endpoints
@@ -443,7 +466,9 @@ async def startup():
 - GET /api/auth/me
 - POST /api/auth/google-session
 """)
-    logger.info("Test credentials written")
+        logger.info("Test credentials written")
+    except Exception as e:
+        logger.warning(f"Could not write test credentials: {e}")
 
 @app.on_event("shutdown")
 async def shutdown():
