@@ -1,0 +1,163 @@
+{
+  "theme": "Dark",
+  "archetype": "Archetype 5 (Jewel & Luxury)",
+  "rationale": "The user requested a premium AI beauty experience, modern iOS-level aesthetics, glassmorphism, gradient lighting, and high-end typography. The Jewel & Luxury archetype perfectly aligns with this context, emphasizing cinematic and moody visuals over standard app layouts.",
+  "colors": {
+    "background": {
+      "primary": "#0A0A0A",
+      "secondary": "#141414",
+      "tertiary": "#1F1F1F",
+      "overlay": "rgba(10, 10, 10, 0.7)"
+    },
+    "surface": {
+      "glass": "rgba(255, 255, 255, 0.05)",
+      "glassBorder": "rgba(255, 255, 255, 0.1)",
+      "card": "#121212",
+      "elevated": "#1A1A1A"
+    },
+    "brand": {
+      "primary": "#E5C07B",
+      "primaryGradient": ["#F3D088", "#D1A354"],
+      "secondary": "#B76E79",
+      "secondaryGradient": ["#CD828D", "#9F5B66"],
+      "accent": "#F5F5F7"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "tertiary": "#71717A",
+      "inverse": "#000000"
+    },
+    "status": {
+      "success": "#34C759",
+      "warning": "#FF9F0A",
+      "error": "#FF453A",
+      "info": "#0A84FF"
+    }
+  },
+  "typography": {
+    "families": {
+      "heading": "Cormorant Garamond, serif",
+      "body": "Outfit, sans-serif",
+      "mono": "Space Mono, monospace"
+    },
+    "sizes": {
+      "h1": "40px",
+      "h2": "32px",
+      "h3": "24px",
+      "h4": "20px",
+      "bodyLarge": "18px",
+      "body": "16px",
+      "small": "14px",
+      "xs": "12px"
+    },
+    "weights": {
+      "light": "300",
+      "regular": "400",
+      "medium": "500",
+      "semiBold": "600",
+      "bold": "700"
+    },
+    "letterSpacing": {
+      "tight": -0.5,
+      "normal": 0,
+      "wide": 0.5,
+      "widest": 1
+    }
+  },
+  "layout_and_spacing": {
+    "spacingScale": {
+      "1": 4,
+      "2": 8,
+      "3": 12,
+      "4": 16,
+      "6": 24,
+      "8": 32,
+      "12": 48,
+      "16": 64,
+      "20": 80,
+      "24": 96,
+      "32": 128
+    },
+    "containerPadding": 24,
+    "borderRadius": {
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "full": 9999
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "backgroundColor": "rgba(255, 255, 255, 0.05)",
+      "border": "1px solid rgba(255, 255, 255, 0.1)"
+    },
+    "shadows": {
+      "glowPrimary": "0px 0px 20px rgba(229, 192, 123, 0.3)",
+      "glowSecondary": "0px 0px 20px rgba(183, 110, 121, 0.3)"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "Gradient background (#F3D088 to #D1A354), text color black, full rounded, generous padding (e.g., 64px width / 16px vertical)",
+      "secondary": "Transparent background, white/20 border, white text, full rounded",
+      "ghost": "Transparent background, zinc-400 text, no border"
+    },
+    "cards": {
+      "default": "Background #121212, rounded 24px, border white/5, padding 24px",
+      "glass": "Background white/5, border white/10, rounded 24px, padding 24px (used with Expo BlurView)"
+    },
+    "inputs": {
+      "default": "Background #141414, border white/10, rounded 16px, padding 16px, text white"
+    }
+  },
+  "motion": {
+    "transitions": {
+      "default": "LayoutAnimation or Reanimated timing (300ms)",
+      "bounce": "Reanimated spring config (damping: 15)"
+    },
+    "animations": {
+      "fadeIn": "opacity 0 -> 1 over 500ms",
+      "slideUp": "translateY 20 -> 0 over 500ms"
+    }
+  },
+  "accessibility": {
+    "contrast": "Text must maintain at least 4.5:1 against backgrounds.",
+    "focus": "Focus states not typical in mobile, but provide active opacity feedback on buttons.",
+    "testId_convention": "All interactive elements MUST use data-testid in kebab-case mapped to React Native testID prop, e.g., 'submit-analysis-button'."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero_background",
+        "description": "Abstract golden background for splash screen or paywall backdrop.",
+        "url": "https://images.unsplash.com/photo-1760172287483-02d382f63a6f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwzfHxnb2xkJTIwZ3JhZGllbnQlMjBhYnN0cmFjdHxlbnwwfHx8fDE3NzUyNDk4NDh8MA&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "analysis_placeholder",
+        "description": "Close up of a woman with her eyes closed, ideal for showing face analysis mesh overlay.",
+        "url": "https://images.unsplash.com/photo-1641510261762-9c2b95ecaf25?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHw0fHxza2luY2FyZSUyMG1vZGVsJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzc1MjQ5ODQyfDA&ixlib=rb-4.1.0&q=85"
+      },
+      {
+        "category": "result_example_1",
+        "description": "Smiling Asian woman with radiant clear skin for after-treatment preview.",
+        "url": "https://images.pexels.com/photos/30797174/pexels-photo-30797174.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      },
+      {
+        "category": "result_example_2",
+        "description": "Close-up of a woman with natural beauty, good for non-surgical result example.",
+        "url": "https://images.pexels.com/photos/8128677/pexels-photo-8128677.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "This is a React Native Expo application, NOT a web app. Ensure all designs are translated into StyleSheet objects or NativeWind classes (if setup).",
+    "For typography, ensure fonts 'Outfit' (body) and 'Cormorant Garamond' (headings) are loaded via expo-font. Map sizes accordingly.",
+    "For Glassmorphism, utilize `expo-blur` or `@react-native-community/blur` wrapped around semi-transparent views.",
+    "For gradients, use `expo-linear-gradient`.",
+    "Always apply `testID` prop on touchables/inputs using the `data-testid` convention specified (kebab-case).",
+    "Turkish is primary language. Provide English toggle. Texts should be dynamically loaded or managed via state.",
+    "Ensure 'Before/After' slider is built utilizing a pan responder (or react-native-gesture-handler) overlapping the original and modified images."
+  ]
+}
