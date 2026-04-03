@@ -41,4 +41,20 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await removeToken();
+      if (process.env.EXPO_PUBLIC_DEBUG === 'true') {
+        console.warn('[API] 401 Unauthorized - token removed');
+      }
+    }
+    if (process.env.EXPO_PUBLIC_DEBUG === 'true') {
+      console.error('[API] Error:', error.config?.url, error.response?.status, error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
