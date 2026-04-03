@@ -1,0 +1,8 @@
+# Development dependencies (install on top of requirements-prod.txt)
+-r requirements-prod.txt
+pytest==9.0.2
+black==26.3.1
+flake8==7.3.0
+isort==8.0.1
+mypy==1.19.1
+httpx==0.28.1
