@@ -40,6 +40,8 @@ ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 
 _cors_env = os.environ.get('CORS_ORIGINS', '')
 CORS_ORIGINS: list = [o.strip() for o in _cors_env.split(',') if o.strip()] or ["*"]
+if CORS_ORIGINS == ["*"]:
+    logger.warning("CORS_ORIGINS is not set – all origins are allowed. Set CORS_ORIGINS for production.")
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -442,20 +444,20 @@ async def startup():
     except Exception as e:
         logger.error(f"Failed to seed admin user: {e}")
 
-    # Write test credentials
+    # Write test credentials (passwords are NOT written to disk)
     try:
         creds_path = Path("/app/memory/test_credentials.md")
         creds_path.parent.mkdir(parents=True, exist_ok=True)
         creds_path.write_text(f"""# Test Credentials
 ## Admin
 - Email: {ADMIN_EMAIL}
-- Password: {ADMIN_PASSWORD}
+- Password: (see ADMIN_PASSWORD environment variable)
 - Role: admin
 - Subscription: premium
 
 ## Test User
 - Email: test@faceglow.com
-- Password: test123
+- Password: (set via API)
 - Role: user
 
 ## Auth Endpoints

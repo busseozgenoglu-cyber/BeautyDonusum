@@ -1,8 +1,14 @@
 export const COLORS = {
-  bg: { primary: '#0A0A0A', secondary: '#141414', tertiary: '#1F1F1F', overlay: 'rgba(10,10,10,0.7)' },
+  bg: { primary: '#0A0A14', secondary: '#141414', tertiary: '#1F1F1F', overlay: 'rgba(10,10,10,0.7)' },
   surface: { glass: 'rgba(255,255,255,0.05)', glassBorder: 'rgba(255,255,255,0.1)', card: '#121212', elevated: '#1A1A1A' },
   brand: { primary: '#E5C07B', secondary: '#B76E79', accent: '#F5F5F7' },
-  gradient: { gold: ['#F3D088', '#D1A354'] as const, rose: ['#CD828D', '#9F5B66'] as const },
+  gradient: {
+    gold: ['#F3D088', '#D1A354'] as const,
+    rose: ['#CD828D', '#9F5B66'] as const,
+    vibrant: ['#B06EFF', '#6EAEFF'] as const,
+    logoBorder: ['#FF6EC7', '#B06EFF', '#6EAEFF'] as const,
+    bg: ['#0A0A14', '#12091E', '#0D1422'] as const,
+  },
   text: { primary: '#FFFFFF', secondary: '#A1A1AA', tertiary: '#71717A', inverse: '#000000' },
   status: { success: '#34C759', warning: '#FF9F0A', error: '#FF453A', info: '#0A84FF' },
 };

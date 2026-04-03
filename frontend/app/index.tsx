@@ -45,13 +45,13 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#0A0A14', '#12091E', '#0D1422']} style={StyleSheet.absoluteFill} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} />
+      <LinearGradient colors={COLORS.gradient.bg} style={StyleSheet.absoluteFill} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} />
       {/* Vibrant glow effects */}
       <View style={styles.glowTopRight} />
       <View style={styles.glowBottomLeft} />
       <Animated.View style={[styles.logoContainer, logoStyle]}>
         <View style={styles.logoWrapper}>
-          <LinearGradient colors={['#FF6EC7', '#B06EFF', '#6EAEFF']} style={styles.logoBorder} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={COLORS.gradient.logoBorder} style={styles.logoBorder} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={styles.logoInner}>
               <LinearGradient colors={['#F3D088', '#D1A354']} style={styles.logoGradient}>
                 <Text style={styles.logoLetter}>F</Text>
@@ -71,7 +71,7 @@ export default function SplashScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A14', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: COLORS.bg.primary, alignItems: 'center', justifyContent: 'center' },
   glowTopRight: { position: 'absolute', top: -60, right: -60, width: 300, height: 300, borderRadius: 150, backgroundColor: 'rgba(176,110,255,0.18)' },
   glowBottomLeft: { position: 'absolute', bottom: -60, left: -60, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(110,174,255,0.14)' },
   logoContainer: { alignItems: 'center', marginBottom: 16 },

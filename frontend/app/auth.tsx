@@ -9,7 +9,6 @@ import { COLORS, FONT, SPACING, RADIUS } from '../src/utils/theme';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from 'react-native-reanimated';
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -72,7 +71,7 @@ export default function AuthScreen() {
     <View style={styles.root}>
       {/* Vibrant background gradient */}
       <LinearGradient
-        colors={['#0A0A14', '#12091E', '#0D1422']}
+        colors={COLORS.gradient.bg}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}
@@ -88,7 +87,7 @@ export default function AuthScreen() {
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.logoWrapper}>
-                <LinearGradient colors={['#FF6EC7', '#B06EFF', '#6EAEFF']} style={styles.logoBorder} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                <LinearGradient colors={COLORS.gradient.logoBorder} style={styles.logoBorder} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                   <View style={styles.logoInner}>
                     <LinearGradient colors={['#F3D088', '#D1A354']} style={styles.logoGradient}>
                       <Text style={styles.logoLetter}>F</Text>
@@ -103,11 +102,11 @@ export default function AuthScreen() {
             {/* Tabs */}
             <View style={styles.tabRow}>
               <TouchableOpacity testID="login-tab" style={[styles.tab, mode === 'login' && styles.tabActive]} onPress={() => { setMode('login'); setError(''); }}>
-                {mode === 'login' && <LinearGradient colors={['#B06EFF', '#6EAEFF']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
+                {mode === 'login' && <LinearGradient colors={COLORS.gradient.vibrant} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
                 <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>{t('login')}</Text>
               </TouchableOpacity>
               <TouchableOpacity testID="register-tab" style={[styles.tab, mode === 'register' && styles.tabActive]} onPress={() => { setMode('register'); setError(''); }}>
-                {mode === 'register' && <LinearGradient colors={['#B06EFF', '#6EAEFF']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
+                {mode === 'register' && <LinearGradient colors={COLORS.gradient.vibrant} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
                 <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>{t('register')}</Text>
               </TouchableOpacity>
             </View>
@@ -124,7 +123,7 @@ export default function AuthScreen() {
               value={password} onChangeText={setPassword} secureTextEntry />
 
             <TouchableOpacity testID="auth-submit-btn" onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
-              <LinearGradient colors={['#B06EFF', '#6EAEFF']} style={styles.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              <LinearGradient colors={COLORS.gradient.vibrant} style={styles.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{mode === 'login' ? t('login') : t('register')}</Text>}
               </LinearGradient>
             </TouchableOpacity>
@@ -148,7 +147,7 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A14' },
+  root: { flex: 1, backgroundColor: COLORS.bg.primary },
   safeArea: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: SPACING.lg, justifyContent: 'center', paddingVertical: SPACING.xxl },
