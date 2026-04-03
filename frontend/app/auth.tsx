@@ -1,51 +1,117 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { useLang } from '../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../src/utils/theme';
+import { COLORS, FONT, SPACING, RADIUS, SHADOWS } from '../src/utils/theme';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSequence,
+  withSpring,
+} from 'react-native-reanimated';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login, register, googleLogin } = useAuth();
+  const { login, register, googleLogin, error: authError, clearError } = useAuth();
   const { t } = useLang();
   const router = useRouter();
 
+  const tabAnim = useSharedValue(0); // 0 = login, 1 = register
+  const formOpacity = useSharedValue(1);
+  const headerScale = useSharedValue(0.85);
+  const headerOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    headerScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+    headerOpacity.value = withTiming(1, { duration: 700 });
+  }, []);
+
+  useEffect(() => {
+    if (authError) setError(authError);
+  }, [authError]);
+
+  const switchMode = (newMode: 'login' | 'register') => {
+    formOpacity.value = withSequence(withTiming(0, { duration: 150 }), withTiming(1, { duration: 250 }));
+    tabAnim.value = withTiming(newMode === 'register' ? 1 : 0, { duration: 250 });
+    setMode(newMode);
+    setError('');
+    clearError?.();
+  };
+
+  const validateForm = (): boolean => {
+    if (mode === 'register' && !name.trim()) {
+      setError(t('errorNameRequired') || 'Please enter your name');
+      return false;
+    }
+    if (!email.trim()) {
+      setError(t('errorEmailRequired') || 'Email address is required');
+      return false;
+    }
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError(t('errorEmailInvalid') || 'Please enter a valid email address');
+      return false;
+    }
+    if (!password.trim()) {
+      setError(t('errorPasswordRequired') || 'Password is required');
+      return false;
+    }
+    if (password.length < 6) {
+      setError(t('errorPasswordLength') || 'Password must be at least 6 characters');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async () => {
     setError('');
-    if (!email.trim() || !password.trim()) { setError('Lütfen tüm alanları doldurun'); return; }
-    if (mode === 'register' && !name.trim()) { setError('Lütfen adınızı girin'); return; }
+    clearError?.();
+    if (!validateForm()) return;
     setLoading(true);
     try {
       if (mode === 'login') {
-        await login(email, password);
+        await login(email.trim(), password);
       } else {
-        await register(email, password, name);
+        await register(email.trim(), password, name.trim());
       }
       router.replace('/(tabs)/home');
     } catch (e: any) {
       const detail = e.response?.data?.detail;
-      setError(typeof detail === 'string' ? detail : 'Bir hata oluştu');
-    } finally { setLoading(false); }
+      setError(typeof detail === 'string' ? detail : (t('errorGeneric') || 'An error occurred, please try again'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = async () => {
     try {
+      setError('');
+      clearError?.();
       // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
       const redirectUrl = Platform.OS === 'web'
         ? window.location.origin + '/#auth-callback'
         : Linking.createURL('auth-callback');
-      const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+      const baseAuthUrl = process.env.EXPO_PUBLIC_AUTH_URL;
+      if (!baseAuthUrl) {
+        setError(t('errorAuthConfig') || 'Authentication service not configured');
+        return;
+      }
+      const authUrl = `${baseAuthUrl}/?redirect=${encodeURIComponent(redirectUrl)}`;
 
       if (Platform.OS === 'web') {
         window.location.href = authUrl;
@@ -63,150 +129,203 @@ export default function AuthScreen() {
         }
       }
     } catch (e: any) {
-      setError('Google giriş hatası');
-    } finally { setLoading(false); }
+      setError(t('errorGoogleLogin') || 'Google login error');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{ scale: headerScale.value }],
+  }));
+
+  const formStyle = useAnimatedStyle(() => ({
+    opacity: formOpacity.value,
+  }));
+
   return (
-    <View style={styles.root}>
-      {/* Vibrant background gradient */}
+    <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={COLORS.gradient.bg}
+        colors={['#08080B', '#0D0518', '#08080B']}
         style={StyleSheet.absoluteFill}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
-      {/* Decorative glow blobs */}
-      <View style={styles.glowTopRight} />
-      <View style={styles.glowBottomLeft} />
+      {/* Background glow blobs */}
+      <View style={[styles.glowBlob, styles.glowBlobPink]} />
+      <View style={[styles.glowBlob, styles.glowBlobBlue]} />
 
-      <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.logoWrapper}>
-                <LinearGradient colors={COLORS.gradient.logoBorder} style={styles.logoBorder} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <View style={styles.logoInner}>
-                    <LinearGradient colors={['#F3D088', '#D1A354']} style={styles.logoGradient}>
-                      <Text style={styles.logoLetter}>F</Text>
-                    </LinearGradient>
-                  </View>
-                </LinearGradient>
-              </View>
-              <Text style={styles.title}>{t('appName')}</Text>
-              <Text style={styles.subtitle}>{t('tagline')}</Text>
-            </View>
+          {/* Header */}
+          <Animated.View style={[styles.header, headerStyle]}>
+            <LinearGradient colors={COLORS.gradient.primary} style={styles.logoIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+            </LinearGradient>
+            <Text style={styles.title}>{t('appName')}</Text>
+            <Text style={styles.subtitle}>{t('tagline')}</Text>
+          </Animated.View>
 
-            {/* Tabs */}
+          {/* Glass Card */}
+          <BlurView intensity={20} tint="dark" style={styles.card}>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.02)']}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            />
+
+            {/* Tab Switcher */}
             <View style={styles.tabRow}>
-              <TouchableOpacity testID="login-tab" style={[styles.tab, mode === 'login' && styles.tabActive]} onPress={() => { setMode('login'); setError(''); }}>
-                {mode === 'login' && <LinearGradient colors={COLORS.gradient.vibrant} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
-                <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>{t('login')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity testID="register-tab" style={[styles.tab, mode === 'register' && styles.tabActive]} onPress={() => { setMode('register'); setError(''); }}>
-                {mode === 'register' && <LinearGradient colors={COLORS.gradient.vibrant} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />}
-                <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>{t('register')}</Text>
-              </TouchableOpacity>
+              <View style={styles.tabBackground}>
+                <TouchableOpacity
+                  testID="login-tab"
+                  style={[styles.tab, mode === 'login' && styles.tabActiveContainer]}
+                  onPress={() => switchMode('login')}
+                >
+                  {mode === 'login' && (
+                    <LinearGradient colors={COLORS.gradient.primary} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+                  )}
+                  <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>{t('login')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="register-tab"
+                  style={[styles.tab, mode === 'register' && styles.tabActiveContainer]}
+                  onPress={() => switchMode('register')}
+                >
+                  {mode === 'register' && (
+                    <LinearGradient colors={COLORS.gradient.primary} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+                  )}
+                  <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>{t('register')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {/* Error Message */}
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Ionicons name="alert-circle" size={16} color={COLORS.status.error} />
+                <Text style={styles.error}>{error}</Text>
+              </View>
+            ) : null}
 
-            {mode === 'register' && (
-              <TextInput testID="name-input" style={styles.input} placeholder={t('name')} placeholderTextColor="rgba(255,255,255,0.3)"
-                value={name} onChangeText={setName} autoCapitalize="words" />
-            )}
-            <TextInput testID="email-input" style={styles.input} placeholder={t('email')} placeholderTextColor="rgba(255,255,255,0.3)"
-              value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-            <TextInput testID="password-input" style={styles.input} placeholder={t('password')} placeholderTextColor="rgba(255,255,255,0.3)"
-              value={password} onChangeText={setPassword} secureTextEntry />
+            {/* Form Fields */}
+            <Animated.View style={formStyle}>
+              {mode === 'register' && (
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="person-outline" size={18} color={COLORS.text.tertiary} style={styles.inputIcon} />
+                  <TextInput
+                    testID="name-input"
+                    style={styles.input}
+                    placeholder={t('name')}
+                    placeholderTextColor={COLORS.text.tertiary}
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                  />
+                </View>
+              )}
 
-            <TouchableOpacity testID="auth-submit-btn" onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
-              <LinearGradient colors={COLORS.gradient.vibrant} style={styles.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>{mode === 'login' ? t('login') : t('register')}</Text>}
-              </LinearGradient>
-            </TouchableOpacity>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color={COLORS.text.tertiary} style={styles.inputIcon} />
+                <TextInput
+                  testID="email-input"
+                  style={styles.input}
+                  placeholder={t('email')}
+                  placeholderTextColor={COLORS.text.tertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
 
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color={COLORS.text.tertiary} style={styles.inputIcon} />
+                <TextInput
+                  testID="password-input"
+                  style={[styles.input, styles.inputPassword]}
+                  placeholder={t('password')}
+                  placeholderTextColor={COLORS.text.tertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={COLORS.text.tertiary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity testID="auth-submit-btn" onPress={handleSubmit} disabled={loading} activeOpacity={0.85} style={[styles.submitBtnWrapper, SHADOWS.glow]}>
+                <LinearGradient colors={COLORS.gradient.primary} style={styles.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  {loading
+                    ? <ActivityIndicator color="#FFFFFF" />
+                    : (
+                      <View style={styles.submitBtnInner}>
+                        <Text style={styles.submitText}>{mode === 'login' ? t('login') : t('register')}</Text>
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                      </View>
+                    )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Divider */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Text style={styles.dividerText}>{t('or')}</Text>
               <View style={styles.dividerLine} />
             </View>
 
+            {/* Google Button */}
             <TouchableOpacity testID="google-login-btn" style={styles.googleBtn} onPress={handleGoogle} activeOpacity={0.8}>
+              <LinearGradient colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']} style={StyleSheet.absoluteFill} />
               <Ionicons name="logo-google" size={20} color={COLORS.text.primary} />
               <Text style={styles.googleText}>{t('googleLogin')}</Text>
             </TouchableOpacity>
-
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+          </BlurView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg.primary },
-  safeArea: { flex: 1 },
+  container: { flex: 1, backgroundColor: COLORS.bg.primary },
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: SPACING.lg, justifyContent: 'center', paddingVertical: SPACING.xxl },
-
-  // Decorative glows
-  glowTopRight: {
-    position: 'absolute', top: -80, right: -60,
-    width: 300, height: 300, borderRadius: 150,
-    backgroundColor: 'rgba(176,110,255,0.18)',
-  },
-  glowBottomLeft: {
-    position: 'absolute', bottom: -60, left: -80,
-    width: 280, height: 280, borderRadius: 140,
-    backgroundColor: 'rgba(110,174,255,0.14)',
-  },
-
-  // Header
-  header: { alignItems: 'center', marginBottom: 40 },
-  logoWrapper: { marginBottom: 18 },
-  logoBorder: { width: 80, height: 80, borderRadius: 26, padding: 3, alignItems: 'center', justifyContent: 'center' },
-  logoInner: { width: '100%', height: '100%', borderRadius: 22, overflow: 'hidden' },
-  logoGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { fontSize: 36, fontWeight: '700', color: '#000' },
+  scroll: { flexGrow: 1, paddingHorizontal: SPACING.lg, justifyContent: 'center', paddingVertical: SPACING.xl },
+  glowBlob: { position: 'absolute', borderRadius: 999 },
+  glowBlobPink: { width: 320, height: 320, top: -80, left: -80, backgroundColor: 'rgba(255,0,110,0.12)' },
+  glowBlobBlue: { width: 280, height: 280, bottom: -60, right: -60, backgroundColor: 'rgba(58,134,255,0.1)' },
+  header: { alignItems: 'center', marginBottom: 36 },
+  logoIcon: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 18, ...SHADOWS.glow },
   title: { ...FONT.h2, color: COLORS.text.primary, letterSpacing: 1.5 },
-  subtitle: { ...FONT.small, color: 'rgba(255,255,255,0.5)', marginTop: 6 },
-
-  // Tabs
-  tabRow: { flexDirection: 'row', marginBottom: 28, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: RADIUS.md, padding: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: RADIUS.sm, overflow: 'hidden' },
-  tabActive: {},
-  tabText: { ...FONT.body, color: 'rgba(255,255,255,0.4)' },
-  tabTextActive: { color: '#fff', fontWeight: '700' },
-
-  // Form
-  error: { ...FONT.small, color: '#FF6B6B', textAlign: 'center', marginBottom: 16 },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(176,110,255,0.3)',
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    ...FONT.body,
-    color: COLORS.text.primary,
-    marginBottom: 14,
-  },
-  submitBtn: { borderRadius: RADIUS.md, paddingVertical: 16, alignItems: 'center', marginTop: 6 },
-  submitText: { ...FONT.body, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-
-  // Divider
-  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { ...FONT.small, color: 'rgba(255,255,255,0.35)', marginHorizontal: 16 },
-
-  // Google
-  googleBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: RADIUS.md, paddingVertical: 14, gap: 10,
-  },
-  googleText: { ...FONT.body, color: COLORS.text.primary },
+  subtitle: { ...FONT.small, color: COLORS.text.secondary, marginTop: 6, letterSpacing: 0.5 },
+  card: { borderRadius: RADIUS.xl, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', padding: SPACING.lg },
+  tabRow: { marginBottom: SPACING.lg },
+  tabBackground: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: RADIUS.md, padding: 4 },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: RADIUS.sm - 2, overflow: 'hidden' },
+  tabActiveContainer: { overflow: 'hidden' },
+  tabText: { ...FONT.body, color: COLORS.text.tertiary, fontWeight: '500' },
+  tabTextActive: { color: '#FFFFFF', fontWeight: '700' },
+  errorContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,69,58,0.12)', borderWidth: 1, borderColor: 'rgba(255,69,58,0.3)', borderRadius: RADIUS.sm, padding: SPACING.sm, marginBottom: SPACING.md },
+  error: { ...FONT.small, color: COLORS.status.error, flex: 1 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: RADIUS.md, marginBottom: 12, paddingHorizontal: SPACING.md },
+  inputIcon: { marginRight: SPACING.sm },
+  input: { flex: 1, paddingVertical: 14, ...FONT.body, color: COLORS.text.primary },
+  inputPassword: { paddingRight: 8 },
+  eyeIcon: { padding: 4 },
+  submitBtnWrapper: { borderRadius: RADIUS.md, marginTop: 8, overflow: 'visible' },
+  submitBtn: { borderRadius: RADIUS.md, paddingVertical: 16, alignItems: 'center' },
+  submitBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  submitText: { ...FONT.body, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.5 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: SPACING.lg },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
+  dividerText: { ...FONT.small, color: COLORS.text.tertiary, marginHorizontal: SPACING.md },
+  googleBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: RADIUS.md, paddingVertical: 14, gap: 10 },
+  googleText: { ...FONT.body, color: COLORS.text.primary, fontWeight: '500' },
 });
