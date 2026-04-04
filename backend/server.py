@@ -35,6 +35,7 @@ def _require_env(key: str) -> str:
 mongo_url = _require_env("MONGO_URL")
 JWT_SECRET = _require_env("JWT_SECRET")
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 ADMIN_EMAIL = _require_env("ADMIN_EMAIL")
 ADMIN_PASSWORD = _require_env("ADMIN_PASSWORD")
 
@@ -242,6 +243,7 @@ async def google_session(data: SessionRequest):
 # ==================== FACE ANALYSIS ====================
 
 def generate_face_metrics(seed_str: str = "") -> dict:
+    """Fallback: AI key yoksa rastgele metrik üret."""
     if seed_str:
         random.seed(hash(seed_str) % (2**32))
     m = {
@@ -258,6 +260,63 @@ def generate_face_metrics(seed_str: str = "") -> dict:
     }
     random.seed()
     return m
+
+async def analyze_face_with_ai(photo_base64: str, category: str) -> dict:
+    """GPT-4o Vision ile gerçek yüz analizi yapar."""
+    if not OPENAI_API_KEY:
+        return generate_face_metrics(photo_base64[:80])
+
+    try:
+        import httpx
+        cat_text = "cerrahi estetik (ameliyat)" if category == "cerrahi" else "medikal estetik (ameliyatsız)"
+        system_prompt = """Sen uzman bir estetik cerrah ve yüz analizi yapay zekasısın.
+Verilen yüz fotoğrafını analiz et ve aşağıdaki metrikleri 0.0-1.0 arasında puanla.
+SADECE geçerli JSON döndür, başka hiçbir şey yazma:
+{
+  "symmetry_score": 0.0,
+  "jawline_definition": 0.0,
+  "nose_proportion": 0.0,
+  "eye_spacing": 0.0,
+  "lip_ratio": 0.0,
+  "skin_quality": 0.0,
+  "cheekbone_prominence": 0.0,
+  "forehead_proportion": 0.0,
+  "chin_projection": 0.0,
+  "overall_harmony": 0.0
+}"""
+        user_prompt = f"Bu yüzü {cat_text} kategorisinde analiz et. Metrikleri gerçekçi ve detaylı değerlendir."
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "max_tokens": 300,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": [
+                            {"type": "text", "text": user_prompt},
+                            {"type": "image_url", "image_url": {
+                                "url": f"data:image/jpeg;base64,{photo_base64}",
+                                "detail": "high"
+                            }}
+                        ]}
+                    ]
+                }
+            )
+        data = resp.json()
+        content = data["choices"][0]["message"]["content"].strip()
+        if content.startswith("```"):
+            content = "\n".join(content.split("\n")[1:-1])
+        metrics = json.loads(content)
+        # Değerlerin 0-1 arasında olduğunu garantile
+        for k in metrics:
+            metrics[k] = round(max(0.0, min(1.0, float(metrics[k]))), 2)
+        return metrics
+    except Exception as e:
+        logger.error(f"AI yüz analizi hatası: {e}")
+        return generate_face_metrics(photo_base64[:80])
 
 def generate_fallback_recommendations(metrics: dict, category: str) -> dict:
     recs = []
@@ -293,7 +352,7 @@ async def create_analysis(data: AnalysisCreate, request: Request):
     user = await get_current_user(request)
     if data.category not in ("cerrahi", "medikal"):
         raise HTTPException(status_code=400, detail="Geçersiz kategori")
-    metrics = generate_face_metrics(data.photo_base64[:80])
+    metrics = await analyze_face_with_ai(data.photo_base64, data.category)
     analysis_id = str(uuid.uuid4())
     doc = {
         "analysis_id": analysis_id, "user_id": user["user_id"],
@@ -317,25 +376,40 @@ async def get_recommendations(analysis_id: str, request: Request):
     metrics = analysis["metrics"]
     category = analysis["category"]
     recs_data = None
-    try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        cat_text = "Cerrahi (Ameliyat gerektiren)" if category == "cerrahi" else "Medikal Estetik (Ameliyatsız)"
-        system_msg = f"""Sen deneyimli bir estetik cerrah ve güzellik danışmanısın. Yüz analizi metriklerine göre {cat_text} kategorisinde kişiselleştirilmiş öneriler üretiyorsun.
-ÖNEMLİ: Yanıtını SADECE geçerli JSON formatında ver.
+    api_key = OPENAI_API_KEY or EMERGENT_LLM_KEY
+    if api_key:
+        try:
+            import httpx
+            cat_text = "Cerrahi (Ameliyat gerektiren)" if category == "cerrahi" else "Medikal Estetik (Ameliyatsız)"
+            system_msg = f"""Sen deneyimli bir estetik cerrah ve güzellik danışmanısın. Yüz analizi metriklerine göre {cat_text} kategorisinde Türkçe kişiselleştirilmiş öneriler üretiyorsun.
+SADECE geçerli JSON döndür:
 {{"summary":"...","recommendations":[{{"area":"...","title":"...","description":"...","reason":"...","priority":"high|medium|low","improvement_potential":0.0}}],"overall_score":0.0}}"""
-        prompt = f"""Metrikler: simetri={metrics['symmetry_score']}, çene={metrics['jawline_definition']}, burun={metrics['nose_proportion']}, göz={metrics['eye_spacing']}, dudak={metrics['lip_ratio']}, cilt={metrics['skin_quality']}, elmacık={metrics['cheekbone_prominence']}, alın={metrics['forehead_proportion']}, çene_ucu={metrics['chin_projection']}, uyum={metrics['overall_harmony']}
-Kategori: {cat_text}"""
-        chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"rec_{analysis_id}", system_message=system_msg).with_model("openai", "gpt-4o")
-        response = await chat.send_message(UserMessage(text=prompt))
-        resp_text = response.strip()
-        if resp_text.startswith("```"):
-            lines = resp_text.split("\n")
-            resp_text = "\n".join(lines[1:-1]) if lines[-1].strip() == "```" else "\n".join(lines[1:])
-            if resp_text.startswith("json"):
-                resp_text = resp_text[4:].strip()
-        recs_data = json.loads(resp_text)
-    except Exception as e:
-        logger.error(f"LLM öneri hatası: {e}")
+            prompt = f"""Metrikler: simetri={metrics['symmetry_score']}, çene={metrics['jawline_definition']}, burun={metrics['nose_proportion']}, göz={metrics['eye_spacing']}, dudak={metrics['lip_ratio']}, cilt={metrics['skin_quality']}, elmacık={metrics['cheekbone_prominence']}, alın={metrics['forehead_proportion']}, çene_ucu={metrics['chin_projection']}, uyum={metrics['overall_harmony']}
+Kategori: {cat_text}
+Bu metriklere göre detaylı ve kişiselleştirilmiş Türkçe öneriler üret."""
+            async with httpx.AsyncClient(timeout=30) as client:
+                resp = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "gpt-4o",
+                        "max_tokens": 1000,
+                        "messages": [
+                            {"role": "system", "content": system_msg},
+                            {"role": "user", "content": prompt}
+                        ]
+                    }
+                )
+            content = resp.json()["choices"][0]["message"]["content"].strip()
+            if content.startswith("```"):
+                content = "\n".join(content.split("\n")[1:-1])
+                if content.startswith("json"):
+                    content = content[4:].strip()
+            recs_data = json.loads(content)
+        except Exception as e:
+            logger.error(f"GPT-4o öneri hatası: {e}")
+            recs_data = generate_fallback_recommendations(metrics, category)
+    else:
         recs_data = generate_fallback_recommendations(metrics, category)
     await db.analyses.update_one({"analysis_id": analysis_id}, {"$set": {"recommendations": recs_data, "status": "completed"}})
     return {"analysis_id": analysis_id, "recommendations": recs_data, "status": "completed"}
