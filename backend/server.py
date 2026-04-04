@@ -91,43 +91,32 @@ async def get_current_user(request: Request) -> dict:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("user_id", unique=True)
-    await db.analyses.create_index("analysis_id", unique=True)
-    await db.analyses.create_index("user_id")
+    # Startup — MongoDB bağlantısı başarısız olsa bile uygulama ayakta kalsın
+    try:
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("user_id", unique=True)
+        await db.analyses.create_index("analysis_id", unique=True)
+        await db.analyses.create_index("user_id")
 
-    # Admin seed
-    existing = await db.users.find_one({"email": ADMIN_EMAIL})
-    if not existing:
-        await db.users.insert_one({
-            "user_id": f"user_{uuid.uuid4().hex[:12]}",
-            "email": ADMIN_EMAIL,
-            "name": "Admin",
-            "password_hash": hash_password(ADMIN_PASSWORD),
-            "role": "admin", "subscription": "premium",
-            "analyses_count": 0, "language": "tr",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        logger.info(f"Admin oluşturuldu: {ADMIN_EMAIL}")
-    elif not verify_password(ADMIN_PASSWORD, existing.get("password_hash", "")):
-        await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
-        logger.info("Admin şifresi güncellendi")
-
-    # Test user seed — sadece development ortamında oluştur
-    if os.environ.get("APP_ENV", "development") == "development":
-        test_email = "test@faceglow.com"
-        if not await db.users.find_one({"email": test_email}):
+        existing = await db.users.find_one({"email": ADMIN_EMAIL})
+        if not existing:
             await db.users.insert_one({
                 "user_id": f"user_{uuid.uuid4().hex[:12]}",
-                "email": test_email,
-                "name": "Test User",
-                "password_hash": hash_password("test123"),
-                "role": "user", "subscription": "free",
+                "email": ADMIN_EMAIL,
+                "name": "Admin",
+                "password_hash": hash_password(ADMIN_PASSWORD),
+                "role": "admin", "subscription": "premium",
                 "analyses_count": 0, "language": "tr",
                 "created_at": datetime.now(timezone.utc).isoformat()
             })
-            logger.info("Test kullanıcı oluşturuldu (development)")
+            logger.info(f"Admin oluşturuldu: {ADMIN_EMAIL}")
+        elif not verify_password(ADMIN_PASSWORD, existing.get("password_hash", "")):
+            await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
+            logger.info("Admin şifresi güncellendi")
+
+        logger.info("MongoDB bağlantısı başarılı")
+    except Exception as e:
+        logger.error(f"MongoDB başlangıç hatası (uygulama devam ediyor): {e}")
 
     logger.info("Uygulama başlatıldı")
     yield
