@@ -28,7 +28,7 @@ function Ring({ delay, size }: { delay: number; size: number }) {
 }
 
 export default function SplashScreen() {
-  const { user, loading } = useAuth();
+  const { user, loading, autoLogin } = useAuth();
   const { t } = useLang();
   const router = useRouter();
 
@@ -46,8 +46,12 @@ export default function SplashScreen() {
 
   useEffect(() => {
     if (!loading) {
-      const t = setTimeout(() => router.replace(user ? '/(tabs)/home' : '/auth'), 2600);
-      return () => clearTimeout(t);
+      const run = async () => {
+        if (!user) await autoLogin();
+        router.replace('/(tabs)/home');
+      };
+      const timer = setTimeout(run, 2600);
+      return () => clearTimeout(timer);
     }
   }, [loading, user]);
 

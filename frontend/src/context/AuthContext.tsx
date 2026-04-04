@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import api, { setToken, removeToken } from '../utils/api';
 
 type User = {
@@ -20,6 +21,7 @@ type AuthContextType = {
   googleLogin: (sessionId: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  autoLogin: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -74,8 +76,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const autoLogin = async () => {
+    // Mevcut token varsa zaten giriş yapılmış
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data);
+      return;
+    } catch {}
+
+    // Cihaza özel kalıcı kimlik bilgileri oluştur
+    let deviceId = await SecureStore.getItemAsync('device_id');
+    if (!deviceId) {
+      deviceId = 'device_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      await SecureStore.setItemAsync('device_id', deviceId);
+    }
+    const email = `${deviceId}@faceglowpro.app`;
+    const password = deviceId;
+
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      await setToken(data.token);
+      setUser(data.user);
+    } catch {
+      // Hesap yoksa kayıt ol
+      try {
+        const { data } = await api.post('/auth/register', { email, password, name: 'Kullanıcı' });
+        await setToken(data.token);
+        setUser(data.user);
+      } catch {}
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout, refreshUser, autoLogin }}>
       {children}
     </AuthContext.Provider>
   );
