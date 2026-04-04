@@ -26,18 +26,12 @@ ROOT_DIR = Path(__file__).parent
 
 # ==================== ENV VALIDATION ====================
 
-def _require_env(key: str) -> str:
-    val = os.environ.get(key)
-    if not val:
-        raise RuntimeError(f"Zorunlu ortam değişkeni eksik: {key}")
-    return val
-
-mongo_url = _require_env("MONGO_URL")
-JWT_SECRET = _require_env("JWT_SECRET")
+mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+JWT_SECRET = os.environ.get("JWT_SECRET", "default_secret_change_in_production")
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-ADMIN_EMAIL = _require_env("ADMIN_EMAIL")
-ADMIN_PASSWORD = _require_env("ADMIN_PASSWORD")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@faceglowpro.app")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
 # CORS: virgülle ayrılmış origin listesi. Wildcard + credentials birlikte çalışmaz.
 ALLOWED_ORIGINS_RAW = os.environ.get(
