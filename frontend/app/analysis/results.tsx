@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Image, Alert, ActivityIndicator, Linking,
+  ScrollView, Image, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -14,8 +14,7 @@ import Animated, {
   FadeInDown, useSharedValue, useAnimatedStyle, withDelay, withTiming, Easing,
 } from 'react-native-reanimated';
 import api from '../../src/utils/api';
-
-const APP_STORE_URL = 'https://apps.apple.com/app/idYOUR_APP_ID';
+import { purchasePremium } from '../../src/utils/purchases';
 
 const METRIC_LABELS: Record<string, string> = {
   symmetry_score: 'Simetri', jawline_definition: 'Çene Hattı',
@@ -117,6 +116,7 @@ export default function ResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [transforming, setTransforming] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
   const isPremium = user?.subscription === 'premium';
 
@@ -155,16 +155,21 @@ export default function ResultsScreen() {
     return () => clearInterval(iv);
   }, [analysis]);
 
-  const handleUpgrade = () => {
-    setShowPaywall(false);
-    Alert.alert(
-      "Premium'a Yükselt",
-      "App Store'da premium aboneliği satın almak için yönlendirileceksiniz.",
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: "App Store'a Git", onPress: () => Linking.openURL(APP_STORE_URL) },
-      ]
-    );
+  const handleUpgrade = async () => {
+    setPurchasing(true);
+    try {
+      const isPremiumNow = await purchasePremium();
+      if (isPremiumNow) {
+        await api.post('/subscription/activate', { plan: 'premium' });
+        setShowPaywall(false);
+        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi.');
+      }
+    } catch (e: any) {
+      if (e?.userCancelled) { setPurchasing(false); return; }
+      Alert.alert('Hata', e?.message || 'Satın alma tamamlanamadı.');
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const handleTransform = async () => {
@@ -374,10 +379,16 @@ export default function ResultsScreen() {
               ))}
             </View>
 
-            <TouchableOpacity testID="paywall-upgrade-btn" onPress={handleUpgrade} activeOpacity={0.85} style={styles.paywallBtnWrap}>
+            <TouchableOpacity testID="paywall-upgrade-btn" onPress={handleUpgrade} activeOpacity={0.85} style={styles.paywallBtnWrap} disabled={purchasing}>
               <LinearGradient colors={['#F5E0A0', '#E5C07B', '#C9963A']} style={styles.paywallBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                <Ionicons name="diamond" size={18} color="#0A0700" />
-                <Text style={styles.paywallBtnText}>{t('activatePremium')}</Text>
+                {purchasing ? (
+                  <ActivityIndicator size="small" color="#0A0700" />
+                ) : (
+                  <>
+                    <Ionicons name="diamond" size={18} color="#0A0700" />
+                    <Text style={styles.paywallBtnText}>{t('activatePremium')}</Text>
+                  </>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 

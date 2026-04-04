@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from '../src/context/AuthContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
+import { initPurchases } from '../src/utils/purchases';
 
 export default function RootLayout() {
+  useEffect(() => {
+    initPurchases();
+  }, []);
+
   return (
     <LanguageProvider>
       <AuthProvider>

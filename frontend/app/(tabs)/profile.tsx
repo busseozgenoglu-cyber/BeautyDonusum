@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
@@ -7,14 +7,15 @@ import { useLang } from '../../src/context/LanguageContext';
 import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// App Store URL'ini kendi uygulamanın ID'si ile değiştir
-const APP_STORE_URL = 'https://apps.apple.com/app/idYOUR_APP_ID';
+import { purchasePremium, restorePurchases } from '../../src/utils/purchases';
+import api from '../../src/utils/api';
 
 export default function ProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
   const { t, lang, setLang } = useLang();
   const router = useRouter();
+  const [purchasing, setPurchasing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(t('logout'), 'Çıkış yapmak istediğinizden emin misiniz?', [
@@ -26,19 +27,39 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleUpgrade = () => {
-    // Kullanıcıyı App Store'a yönlendir — gerçek ödeme orada yapılır
-    Alert.alert(
-      'Premium\'a Yükselt',
-      'App Store\'da premium aboneliği satın almak için yönlendirileceksiniz.',
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'App Store\'a Git',
-          onPress: () => Linking.openURL(APP_STORE_URL),
-        },
-      ]
-    );
+  const handleUpgrade = async () => {
+    setPurchasing(true);
+    try {
+      const isPremium = await purchasePremium();
+      if (isPremium) {
+        await api.post('/subscription/activate', { plan: 'premium' });
+        await refreshUser();
+        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi.');
+      }
+    } catch (e: any) {
+      if (e?.userCancelled) return;
+      Alert.alert('Hata', e?.message || 'Satın alma tamamlanamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const isPremium = await restorePurchases();
+      if (isPremium) {
+        await api.post('/subscription/activate', { plan: 'premium' });
+        await refreshUser();
+        Alert.alert('Başarılı', 'Satın alımlarınız geri yüklendi.');
+      } else {
+        Alert.alert('Bilgi', 'Aktif premium abonelik bulunamadı.');
+      }
+    } catch {
+      Alert.alert('Hata', 'Geri yükleme başarısız. Lütfen tekrar deneyin.');
+    } finally {
+      setRestoring(false);
+    }
   };
 
   const toggleLang = () => setLang(lang === 'tr' ? 'en' : 'tr');
@@ -80,17 +101,32 @@ export default function ProfileScreen() {
         </View>
 
         {user?.subscription !== 'premium' && (
-          <TouchableOpacity testID="upgrade-btn" onPress={handleUpgrade} activeOpacity={0.8}>
-            <LinearGradient
-              colors={['#F3D088', '#D1A354']}
-              style={styles.upgradeBtn}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Ionicons name="diamond" size={20} color="#000" />
-              <Text style={styles.upgradeText}>{t('upgradePremium')}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity testID="upgrade-btn" onPress={handleUpgrade} activeOpacity={0.8} disabled={purchasing}>
+              <LinearGradient
+                colors={['#F3D088', '#D1A354']}
+                style={styles.upgradeBtn}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                {purchasing ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <>
+                    <Ionicons name="diamond" size={20} color="#000" />
+                    <Text style={styles.upgradeText}>{t('upgradePremium')}</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity testID="restore-btn" onPress={handleRestore} activeOpacity={0.7} disabled={restoring} style={styles.restoreBtn}>
+              {restoring ? (
+                <ActivityIndicator size="small" color={COLORS.text.tertiary} />
+              ) : (
+                <Text style={styles.restoreText}>Satın Alımları Geri Yükle</Text>
+              )}
+            </TouchableOpacity>
+          </>
         )}
 
         <View style={styles.settingsSection}>
@@ -157,9 +193,14 @@ const styles = StyleSheet.create({
   upgradeBtn: {
     borderRadius: RADIUS.md, paddingVertical: 16,
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 10, marginBottom: 24,
+    justifyContent: 'center', gap: 10, marginBottom: 10,
   },
   upgradeText: { ...FONT.body, fontWeight: '700', color: COLORS.text.inverse },
+  restoreBtn: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 10, marginBottom: 14,
+  },
+  restoreText: { ...FONT.small, color: COLORS.text.tertiary, textDecorationLine: 'underline' },
   settingsSection: { marginTop: 8 },
   sectionLabel: {
     ...FONT.small, color: COLORS.text.tertiary, marginBottom: 12,
