@@ -9,7 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native — EAS Build tarafından otomatik oluşturulur
+ios/
+android/
 .kotlin/
 *.orig.*
 *.jks

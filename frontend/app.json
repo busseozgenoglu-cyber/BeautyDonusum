@@ -55,7 +55,6 @@
           "cameraPermission": "Yüz analiziniz için kamera kullanmak istiyoruz."
         }
       ],
-      "react-native-purchases"
     ],
     "experiments": {
       "typedRoutes": true
