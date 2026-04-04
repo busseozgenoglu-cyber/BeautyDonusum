@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-9.0.2, pluggy-1.6.0 -- /root/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /app/backend
+plugins: anyio-4.13.0
+collecting ... collected 18 items
+
+tests/test_faceglow_api.py::TestHealth::test_health_check PASSED         [  5%]
+tests/test_faceglow_api.py::TestAuth::test_register_new_user FAILED      [ 11%]
+tests/test_faceglow_api.py::TestAuth::test_register_duplicate_email PASSED [ 16%]
+tests/test_faceglow_api.py::TestAuth::test_login_success PASSED          [ 22%]
+tests/test_faceglow_api.py::TestAuth::test_login_invalid_credentials PASSED [ 27%]
+tests/test_faceglow_api.py::TestAuth::test_get_me_authenticated PASSED   [ 33%]
+tests/test_faceglow_api.py::TestAuth::test_get_me_unauthenticated PASSED [ 38%]
+tests/test_faceglow_api.py::TestAnalysis::test_create_analysis_cerrahi PASSED [ 44%]
+tests/test_faceglow_api.py::TestAnalysis::test_create_analysis_medikal PASSED [ 50%]
+tests/test_faceglow_api.py::TestAnalysis::test_create_analysis_unauthenticated PASSED [ 55%]
+tests/test_faceglow_api.py::TestAnalysis::test_get_recommendations PASSED [ 61%]
+tests/test_faceglow_api.py::TestAnalysis::test_get_analysis_by_id PASSED [ 66%]
+tests/test_faceglow_api.py::TestAnalysis::test_get_user_history PASSED   [ 72%]
+tests/test_faceglow_api.py::TestSubscription::test_activate_premium_subscription PASSED [ 77%]
+tests/test_faceglow_api.py::TestSubscription::test_subscription_status PASSED [ 83%]
+tests/test_faceglow_api.py::TestPremiumFeatures::test_transform_requires_premium FAILED [ 88%]
+tests/test_faceglow_api.py::TestPremiumFeatures::test_transform_with_premium PASSED [ 94%]
+tests/test_faceglow_api.py::TestUserSettings::test_update_language PASSED [100%]
+
+=================================== FAILURES ===================================
+_______________________ TestAuth.test_register_new_user ________________________
+tests/test_faceglow_api.py:82: in test_register_new_user
+    assert data["user"]["email"] == unique_email
+E   AssertionError: assert 'test_newuser...@faceglow.com' == 'TEST_newuser...@faceglow.com'
+E     
+E     - TEST_newuser_1775250485@faceglow.com
+E     ? ^^^^
+E     + test_newuser_1775250485@faceglow.com
+E     ? ^^^^
+_____________ TestPremiumFeatures.test_transform_requires_premium ______________
+tests/test_faceglow_api.py:308: in test_transform_requires_premium
+    assert response.status_code in [200, 403]
+E   assert 500 in [200, 403]
+E    +  where 500 = <Response [500]>.status_code
+------- generated xml file: /app/test_reports/pytest/pytest_results.xml --------
+=========================== short test summary info ============================
+FAILED tests/test_faceglow_api.py::TestAuth::test_register_new_user - Asserti...
+FAILED tests/test_faceglow_api.py::TestPremiumFeatures::test_transform_requires_premium
+======================== 2 failed, 16 passed in 40.00s =========================
