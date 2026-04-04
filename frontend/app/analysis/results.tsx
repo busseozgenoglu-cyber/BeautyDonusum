@@ -337,63 +337,182 @@ export default function ResultsScreen() {
       {/* Paywall Modal */}
       {showPaywall && (
         <View style={styles.paywallOverlay}>
-          <View style={styles.paywallCard}>
-            {/* Close → goes back, not just hides */}
-            <TouchableOpacity
-              testID="close-paywall"
-              style={styles.paywallClose}
-              onPress={() => router.replace('/(tabs)/home')}
-            >
-              <Ionicons name="close" size={22} color={COLORS.text.tertiary} />
-            </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={styles.paywallScroll}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            <View style={styles.paywallCard}>
+              {/* Close */}
+              <TouchableOpacity
+                testID="close-paywall"
+                style={styles.paywallClose}
+                onPress={() => router.replace('/(tabs)/home')}
+              >
+                <Ionicons name="close" size={20} color={COLORS.text.tertiary} />
+              </TouchableOpacity>
 
-            <LinearGradient
-              colors={['rgba(229,192,123,0.12)', 'transparent']}
-              style={styles.paywallTopGlow}
-            />
+              <LinearGradient
+                colors={['rgba(229,192,123,0.18)', 'rgba(229,192,123,0.04)', 'transparent']}
+                style={styles.paywallTopGlow}
+              />
 
-            <View style={styles.paywallIconWrap}>
-              <LinearGradient colors={['#F5E0A0', '#C9963A']} style={styles.paywallIconGrad}>
-                <Ionicons name="diamond" size={28} color="#0A0700" />
-              </LinearGradient>
-            </View>
+              {/* Free Trial Badge */}
+              <View style={styles.trialBadge}>
+                <LinearGradient colors={['#2A1F00', '#1A1200']} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="gift-outline" size={13} color="#F5C842" />
+                  <Text style={styles.trialBadgeText}>7 GÜN ÜCRETSİZ DENEME</Text>
+                </LinearGradient>
+              </View>
 
-            <Text style={styles.paywallTitle}>Premium Gerekli</Text>
-            <Text style={styles.paywallDesc}>
-              {"Tüm önerileri, detaylı metrikleri ve AI dönüşüm simülasyonunu görmek için Premium'a yükseltin."}
-            </Text>
+              {/* Icon */}
+              <View style={styles.paywallIconWrap}>
+                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={styles.paywallIconGrad}>
+                  <Ionicons name="diamond" size={30} color="#0A0700" />
+                </LinearGradient>
+              </View>
 
-            <View style={styles.featureGrid}>
-              {[
-                { icon: 'document-text-outline', text: t('fullReport') },
-                { icon: 'infinite-outline', text: t('unlimitedAnalysis') },
-                { icon: 'images-outline', text: t('hdTransform') },
-                { icon: 'bookmark-outline', text: t('saveCompare') },
-              ].map((f, i) => (
-                <View key={i} style={styles.featureItem}>
-                  <View style={styles.featureIconBox}>
-                    <Ionicons name={f.icon as any} size={17} color={COLORS.brand.primary} />
-                  </View>
-                  <Text style={styles.featureText}>{f.text}</Text>
+              <Text style={styles.paywallTitle}>Premium'a Geç</Text>
+              <Text style={styles.paywallSubtitle}>
+                Uzman cerrah seviyesinde AI analiz
+              </Text>
+              <Text style={styles.paywallDesc}>
+                Altın oran hesaplamaları, estetik cerrah önerileri ve kişisel dönüşüm simülasyonuyla yüzünüzün gerçek potansiyelini keşfedin.
+              </Text>
+
+              {/* Social Proof */}
+              <View style={styles.socialProof}>
+                <View style={styles.socialItem}>
+                  <Text style={styles.socialNum}>50.000+</Text>
+                  <Text style={styles.socialLabel}>Analiz</Text>
                 </View>
-              ))}
+                <View style={styles.socialDivider} />
+                <View style={styles.socialItem}>
+                  <Text style={styles.socialNum}>4.9★</Text>
+                  <Text style={styles.socialLabel}>Puan</Text>
+                </View>
+                <View style={styles.socialDivider} />
+                <View style={styles.socialItem}>
+                  <Text style={styles.socialNum}>%94</Text>
+                  <Text style={styles.socialLabel}>Memnuniyet</Text>
+                </View>
+              </View>
+
+              {/* Features */}
+              <View style={styles.featureGrid}>
+                {[
+                  {
+                    icon: 'analytics-outline',
+                    title: 'Altın Oran Analizi',
+                    desc: 'Fibonacci oranlarıyla yüz geometrinizi ölçün',
+                  },
+                  {
+                    icon: 'medical-outline',
+                    title: 'Cerrah Tavsiyeleri',
+                    desc: 'Rinoplasti, çene kontürleme ve daha fazlası',
+                  },
+                  {
+                    icon: 'sparkles-outline',
+                    title: 'AI Dönüşüm Simülasyonu',
+                    desc: 'İşlem öncesi gerçekçi HD görüntünüzü görün',
+                  },
+                  {
+                    icon: 'document-text-outline',
+                    title: 'Detaylı PDF Raporu',
+                    desc: 'Doktorunuza götürebileceğiniz tam rapor',
+                  },
+                  {
+                    icon: 'infinite-outline',
+                    title: 'Sınırsız Analiz',
+                    desc: 'İstediğiniz kadar analiz yapın',
+                  },
+                  {
+                    icon: 'trending-up-outline',
+                    title: 'İlerleme Takibi',
+                    desc: 'Öncesi/sonrası karşılaştırma geçmişi',
+                  },
+                ].map((f, i) => (
+                  <View key={i} style={styles.featureItem}>
+                    <LinearGradient
+                      colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.04)']}
+                      style={styles.featureIconBox}
+                    >
+                      <Ionicons name={f.icon as any} size={18} color={COLORS.brand.primary} />
+                    </LinearGradient>
+                    <View style={styles.featureTextWrap}>
+                      <Text style={styles.featureTitle}>{f.title}</Text>
+                      <Text style={styles.featureDesc}>{f.desc}</Text>
+                    </View>
+                    <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+                  </View>
+                ))}
+              </View>
+
+              {/* Pricing */}
+              <View style={styles.pricingBox}>
+                <LinearGradient
+                  colors={['rgba(229,192,123,0.08)', 'rgba(229,192,123,0.02)']}
+                  style={styles.pricingGrad}
+                >
+                  <View style={styles.pricingRow}>
+                    <View>
+                      <Text style={styles.pricingFree}>İlk 7 gün ücretsiz</Text>
+                      <Text style={styles.pricingAfter}>Sonrasında aylık otomatik yenilenir</Text>
+                    </View>
+                    <View style={styles.pricingRight}>
+                      <Text style={styles.pricingOld}>₺299</Text>
+                      <Text style={styles.pricingNow}>₺149</Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </View>
+
+              {/* CTA Button */}
+              <TouchableOpacity
+                testID="paywall-upgrade-btn"
+                onPress={handleUpgrade}
+                activeOpacity={0.88}
+                style={styles.paywallBtnWrap}
+                disabled={purchasing}
+              >
+                <LinearGradient
+                  colors={['#F8ECC0', '#E5C07B', '#C08A28']}
+                  style={styles.paywallBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  {purchasing ? (
+                    <ActivityIndicator size="small" color="#0A0700" />
+                  ) : (
+                    <>
+                      <Ionicons name="diamond" size={18} color="#0A0700" />
+                      <Text style={styles.paywallBtnText}>7 Gün Ücretsiz Başla</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <Text style={styles.paywallNote}>
+                İstediğiniz zaman iptal edebilirsiniz · App Store üzerinden ödeme
+              </Text>
+
+              {/* Trust badges */}
+              <View style={styles.trustRow}>
+                <View style={styles.trustItem}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.text.tertiary} />
+                  <Text style={styles.trustText}>Güvenli ödeme</Text>
+                </View>
+                <View style={styles.trustItem}>
+                  <Ionicons name="lock-closed-outline" size={14} color={COLORS.text.tertiary} />
+                  <Text style={styles.trustText}>Veriler şifreli</Text>
+                </View>
+                <View style={styles.trustItem}>
+                  <Ionicons name="refresh-outline" size={14} color={COLORS.text.tertiary} />
+                  <Text style={styles.trustText}>Kolay iptal</Text>
+                </View>
+              </View>
             </View>
-
-            <TouchableOpacity testID="paywall-upgrade-btn" onPress={handleUpgrade} activeOpacity={0.85} style={styles.paywallBtnWrap} disabled={purchasing}>
-              <LinearGradient colors={['#F5E0A0', '#E5C07B', '#C9963A']} style={styles.paywallBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                {purchasing ? (
-                  <ActivityIndicator size="small" color="#0A0700" />
-                ) : (
-                  <>
-                    <Ionicons name="diamond" size={18} color="#0A0700" />
-                    <Text style={styles.paywallBtnText}>{t('activatePremium')}</Text>
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <Text style={styles.paywallNote}>App Store üzerinden ödeme yapılacaktır</Text>
-          </View>
+          </ScrollView>
         </View>
       )}
     </View>
@@ -477,34 +596,76 @@ const styles = StyleSheet.create({
   // Paywall
   paywallOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.88)',
-    justifyContent: 'center', paddingHorizontal: SPACING.lg,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'flex-end',
   },
+  paywallScroll: { flexGrow: 1, justifyContent: 'flex-end' },
   paywallCard: {
-    backgroundColor: '#131313', borderRadius: 28,
-    padding: 28, alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)', overflow: 'hidden',
+    backgroundColor: '#111111',
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
+    paddingHorizontal: 24, paddingTop: 12, paddingBottom: 40,
+    alignItems: 'center',
+    borderWidth: 1, borderBottomWidth: 0,
+    borderColor: 'rgba(229,192,123,0.2)', overflow: 'hidden',
   },
-  paywallClose: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 6 },
+  paywallClose: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20 },
   paywallTopGlow: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 140,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    position: 'absolute', top: 0, left: 0, right: 0, height: 180,
+    borderTopLeftRadius: 32, borderTopRightRadius: 32,
   },
-  paywallIconWrap: { width: 72, height: 72, borderRadius: 22, overflow: 'hidden', marginBottom: 16, marginTop: 8 },
+  // Trial badge
+  trialBadge: { borderRadius: 20, overflow: 'hidden', marginBottom: 16, marginTop: 10 },
+  trialBadgeGrad: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,200,66,0.35)',
+  },
+  trialBadgeText: { fontSize: 11, fontWeight: '800', color: '#F5C842', letterSpacing: 1.2 },
+  paywallIconWrap: { width: 68, height: 68, borderRadius: 20, overflow: 'hidden', marginBottom: 14 },
   paywallIconGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  paywallTitle: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 10, textAlign: 'center' },
-  paywallDesc: { ...FONT.body, color: COLORS.text.secondary, textAlign: 'center', lineHeight: 24, marginBottom: 24 },
-  featureGrid: { width: '100%', gap: 12, marginBottom: 28 },
-  featureItem: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureIconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: 'rgba(229,192,123,0.08)',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)',
-    alignItems: 'center', justifyContent: 'center',
+  paywallTitle: { fontSize: 26, fontWeight: '800', color: COLORS.text.primary, marginBottom: 4, textAlign: 'center', letterSpacing: -0.5 },
+  paywallSubtitle: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '600', marginBottom: 10, textAlign: 'center' },
+  paywallDesc: { ...FONT.small, color: COLORS.text.secondary, textAlign: 'center', lineHeight: 22, marginBottom: 18, paddingHorizontal: 8 },
+  // Social proof
+  socialProof: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 20,
+    marginBottom: 20, width: '100%',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
-  featureText: { ...FONT.body, color: COLORS.text.primary },
-  paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden' },
+  socialItem: { flex: 1, alignItems: 'center' },
+  socialNum: { fontSize: 17, fontWeight: '800', color: COLORS.brand.primary },
+  socialLabel: { ...FONT.xs, color: COLORS.text.tertiary, marginTop: 2 },
+  socialDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.08)' },
+  // Features
+  featureGrid: { width: '100%', gap: 10, marginBottom: 20 },
+  featureItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 2 },
+  featureIconBox: {
+    width: 38, height: 38, borderRadius: 11,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(229,192,123,0.18)',
+  },
+  featureTextWrap: { flex: 1 },
+  featureTitle: { ...FONT.small, color: COLORS.text.primary, fontWeight: '600' },
+  featureDesc: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 1, lineHeight: 15 },
+  // Pricing
+  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  pricingGrad: { paddingVertical: 14, paddingHorizontal: 18 },
+  pricingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pricingFree: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
+  pricingAfter: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 2 },
+  pricingRight: { alignItems: 'flex-end' },
+  pricingOld: { fontSize: 13, color: COLORS.text.tertiary, textDecorationLine: 'line-through' },
+  pricingNow: { fontSize: 22, fontWeight: '800', color: COLORS.brand.primary },
+  // Button
+  paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 12 },
   paywallBtn: { paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  paywallBtnText: { ...FONT.h4, color: '#0A0700', fontWeight: '700' },
-  paywallNote: { ...FONT.xs, color: COLORS.text.tertiary, marginTop: 14 },
+  paywallBtnText: { fontSize: 17, color: '#0A0700', fontWeight: '800', letterSpacing: -0.2 },
+  paywallNote: { ...FONT.xs, color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
+  // Trust
+  trustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
+  trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  trustText: { fontSize: 11, color: COLORS.text.tertiary },
 });
