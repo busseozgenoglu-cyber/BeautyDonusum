@@ -496,6 +496,18 @@ export default function ResultsScreen() {
                 İstediğiniz zaman iptal edebilirsiniz · App Store üzerinden ödeme
               </Text>
 
+              {__DEV__ && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await api.post('/subscription/activate', { plan: 'premium' });
+                    setShowPaywall(false);
+                  }}
+                  style={styles.devBypass}
+                >
+                  <Text style={styles.devBypassText}>🧪 TEST: Paywallı Geç</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Trust badges */}
               <View style={styles.trustRow}>
                 <View style={styles.trustItem}>
@@ -668,4 +680,10 @@ const styles = StyleSheet.create({
   trustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   trustText: { fontSize: 11, color: COLORS.text.tertiary },
+  devBypass: {
+    marginTop: 12, paddingVertical: 8, paddingHorizontal: 20,
+    borderRadius: 10, backgroundColor: 'rgba(255,100,100,0.12)',
+    borderWidth: 1, borderColor: 'rgba(255,100,100,0.3)',
+  },
+  devBypassText: { fontSize: 12, color: '#FF6464', fontWeight: '700' },
 });
