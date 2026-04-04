@@ -9,8 +9,10 @@ import Animated, {
   withRepeat, withTiming, withSequence, withDelay,
   interpolate, Easing,
 } from 'react-native-reanimated';
-import api from '../../src/utils/api';
+import api, { setToken } from '../../src/utils/api';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
+import { useAuth } from '../../src/context/AuthContext';
+import * as SecureStore from 'expo-secure-store';
 
 const { width: W } = Dimensions.get('window');
 
@@ -74,6 +76,7 @@ const STEPS = [
 export default function LoadingScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
+  const { autoLogin, user } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const cancelled = useRef(false);
@@ -82,8 +85,14 @@ export default function LoadingScreen() {
     cancelled.current = false;
     const run = async () => {
       try {
+        // Token yoksa önce auth sağla
+        const existingToken = await SecureStore.getItemAsync('auth_token');
+        if (!existingToken) {
+          await autoLogin();
+        }
+
         const photoBase64 = pendingPhotoStore.photo ?? 'placeholder_photo_data';
-        setStep(0); await delay(1200);
+        setStep(0); await delay(800);
         if (cancelled.current) return;
 
         setStep(1);

@@ -93,17 +93,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const email = `${deviceId}@faceglowpro.app`;
     const password = deviceId;
 
+    // Login dene
     try {
       const { data } = await api.post('/auth/login', { email, password });
       await setToken(data.token);
       setUser(data.user);
-    } catch {
-      // Hesap yoksa kayıt ol
-      try {
-        const { data } = await api.post('/auth/register', { email, password, name: 'Kullanıcı' });
-        await setToken(data.token);
-        setUser(data.user);
-      } catch {}
+      return;
+    } catch {}
+
+    // Hesap yoksa kayıt ol
+    try {
+      const { data } = await api.post('/auth/register', { email, password, name: 'Kullanıcı' });
+      await setToken(data.token);
+      setUser(data.user);
+    } catch (e) {
+      console.error('[autoLogin] Failed:', e);
     }
   };
 

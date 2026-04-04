@@ -50,7 +50,7 @@ export default function SplashScreen() {
         if (!user) await autoLogin();
         router.replace('/(tabs)/home');
       };
-      const timer = setTimeout(run, 2600);
+      const timer = setTimeout(run, 1200);
       return () => clearTimeout(timer);
     }
   }, [loading, user]);
