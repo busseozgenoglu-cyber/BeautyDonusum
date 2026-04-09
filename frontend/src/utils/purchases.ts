@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 // TODO: RevenueCat dashboard'dan API key alın:
 //   https://app.revenuecat.com → Apps → [Uygulamanız] → API Keys → Apple API Key
 // ─────────────────────────────────────────────────────────────────────────────
-const RC_API_KEY_IOS = 'test_UyU0vcsGnUogtgWpcekcDytDyRy';
+const RC_API_KEY_IOS = 'appl_fjkstFwybHVwjLbAYzFnBktDjRo';
 
 export const ENTITLEMENT_ID = 'premium';
 
