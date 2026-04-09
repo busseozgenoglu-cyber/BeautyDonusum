@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated as RNAnimated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated as RNAnimated, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -145,8 +145,9 @@ export default function HomeScreen() {
 
           {/* Hero — Face mesh scanner */}
           <Animated.View entering={FadeInDown.delay(80).duration(600)} style={s.heroWrap}>
+            <Image source={require('../../assets/images/hero-bg.png')} style={s.heroBgImage} blurRadius={2} />
             <LinearGradient
-              colors={['rgba(124,58,237,0.15)', 'rgba(79,70,229,0.08)', 'rgba(0,0,0,0)']}
+              colors={['rgba(15,10,30,0.3)', 'rgba(15,10,30,0.6)', 'rgba(6,6,12,0.95)']}
               style={s.heroGradient}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
             />
@@ -277,8 +278,9 @@ const s = StyleSheet.create({
   badgeTxt: { fontSize: 12, fontWeight: '700', color: '#818CF8' },
   badgeTxtPremium: { color: '#E5C07B' },
 
-  heroWrap: { alignItems: 'center', paddingVertical: 24, marginBottom: 24, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(124,58,237,0.2)', backgroundColor: 'rgba(124,58,237,0.04)' },
-  heroGradient: { position: 'absolute', top: 0, left: 0, right: 0, height: '60%' },
+  heroWrap: { alignItems: 'center', paddingVertical: 24, marginBottom: 24, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
+  heroBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
+  heroGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   heroText: { alignItems: 'center', marginTop: 16, marginBottom: 16 },
   heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
   heroSub: { fontSize: 13, color: 'rgba(129,140,248,0.8)', marginTop: 4 },

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
@@ -125,7 +125,8 @@ export default function LoadingScreen() {
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={['#0A0A0A', '#0E0E0E', '#0A0A0A']} style={StyleSheet.absoluteFill} />
+      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={8} />
+      <LinearGradient colors={['rgba(6,6,12,0.85)', 'rgba(10,10,20,0.9)', 'rgba(6,6,12,0.85)']} style={StyleSheet.absoluteFill} />
       <View style={styles.ambientGlow} />
 
       <SafeAreaView style={styles.container}>
