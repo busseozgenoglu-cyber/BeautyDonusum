@@ -172,31 +172,15 @@ export default function ResultsScreen() {
   const handleUpgrade = async () => {
     setPurchasing(true);
     try {
-      let activated = false;
-      try {
-        // RevenueCat kuruluysa gerçek ödeme al
-        const isPremiumNow = await purchasePremium();
-        if (isPremiumNow) activated = true;
-      } catch (rcError: any) {
-        // RevenueCat yapılandırılmamış veya ürün yok — backend'den direkt aktif et (test modu)
-        if (
-          rcError?.userCancelled
-        ) {
-          setPurchasing(false);
-          return;
-        }
-        // Satın alma seçeneği bulunamadı → test/geliştirme ortamı, direkt aktif et
-        console.warn('[purchase] RevenueCat unavailable, activating via backend:', rcError?.message);
-        activated = true;
-      }
-
-      if (activated) {
+      const isPremiumNow = await purchasePremium();
+      if (isPremiumNow) {
         await api.post('/subscription/activate', { plan: 'premium' });
         setShowPaywall(false);
-        Alert.alert('Tebrikler! 🎉', 'Premium aboneliğiniz aktif edildi.');
+        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi.');
       }
     } catch (e: any) {
-      Alert.alert('Hata', e?.message || 'Aktivasyon tamamlanamadı.');
+      if (e?.userCancelled) return;
+      Alert.alert('Hata', e?.message || 'Satın alma tamamlanamadı. Lütfen tekrar deneyin.');
     } finally {
       setPurchasing(false);
     }
@@ -460,18 +444,18 @@ export default function ResultsScreen() {
               {/* Social Proof */}
               <View style={styles.socialProof}>
                 <View style={styles.socialItem}>
-                  <Text style={styles.socialNum}>50.000+</Text>
-                  <Text style={styles.socialLabel}>Analiz</Text>
+                  <Text style={styles.socialNum}>AI</Text>
+                  <Text style={styles.socialLabel}>Destekli</Text>
                 </View>
                 <View style={styles.socialDivider} />
                 <View style={styles.socialItem}>
-                  <Text style={styles.socialNum}>4.9★</Text>
-                  <Text style={styles.socialLabel}>Puan</Text>
+                  <Text style={styles.socialNum}>10+</Text>
+                  <Text style={styles.socialLabel}>Metrik</Text>
                 </View>
                 <View style={styles.socialDivider} />
                 <View style={styles.socialItem}>
-                  <Text style={styles.socialNum}>%94</Text>
-                  <Text style={styles.socialLabel}>Memnuniyet</Text>
+                  <Text style={styles.socialNum}>HD</Text>
+                  <Text style={styles.socialLabel}>Simülasyon</Text>
                 </View>
               </View>
 
@@ -494,19 +478,14 @@ export default function ResultsScreen() {
                     desc: 'İşlem öncesi gerçekçi HD görüntünüzü görün',
                   },
                   {
-                    icon: 'document-text-outline',
-                    title: 'Detaylı PDF Raporu',
-                    desc: 'Doktorunuza götürebileceğiniz tam rapor',
+                    icon: 'trending-up-outline',
+                    title: 'İlerleme Takibi',
+                    desc: 'Öncesi/sonrası karşılaştırma geçmişi',
                   },
                   {
                     icon: 'infinite-outline',
                     title: 'Sınırsız Analiz',
                     desc: 'İstediğiniz kadar analiz yapın',
-                  },
-                  {
-                    icon: 'trending-up-outline',
-                    title: 'İlerleme Takibi',
-                    desc: 'Öncesi/sonrası karşılaştırma geçmişi',
                   },
                 ].map((f, i) => (
                   <View key={i} style={styles.featureItem}>

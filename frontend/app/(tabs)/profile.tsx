@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
@@ -145,6 +145,22 @@ export default function ProfileScreen() {
               <Ionicons name="log-out-outline" size={20} color={COLORS.status.error} />
               <Text style={[styles.settingText, { color: COLORS.status.error }]}>{t('logout')}</Text>
             </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingRow} onPress={() => Linking.openURL('https://faceglowpro.app/privacy')}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="shield-outline" size={20} color={COLORS.text.secondary} />
+              <Text style={styles.settingText}>Gizlilik Politikası</Text>
+            </View>
+            <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingRow} onPress={() => Linking.openURL('https://faceglowpro.app/terms')}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="document-text-outline" size={20} color={COLORS.text.secondary} />
+              <Text style={styles.settingText}>Kullanım Koşulları</Text>
+            </View>
+            <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
           </TouchableOpacity>
         </View>
 

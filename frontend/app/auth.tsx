@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -139,8 +139,16 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(540)}>
-              <Text style={s.footnote}>Devam ederek Kullanım Koşullarını kabul etmiş olursunuz.</Text>
+            <Animated.View entering={FadeInDown.delay(540)} style={s.legalRow}>
+              <Text style={s.footnote}>Devam ederek </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://faceglowpro.app/terms')}>
+                <Text style={s.legalLink}>Kullanım Koşulları</Text>
+              </TouchableOpacity>
+              <Text style={s.footnote}>'nı ve </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://faceglowpro.app/privacy')}>
+                <Text style={s.legalLink}>Gizlilik Politikası</Text>
+              </TouchableOpacity>
+              <Text style={s.footnote}>'nı kabul etmiş olursunuz.</Text>
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -190,5 +198,7 @@ const s = StyleSheet.create({
   google: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 16, paddingVertical: 16 },
   googleTxt: { fontSize: 15, color: '#FFF', fontWeight: '600' },
 
-  footnote: { fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: 24, lineHeight: 18 },
+  legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 24 },
+  footnote: { fontSize: 11, color: 'rgba(255,255,255,0.2)', lineHeight: 18 },
+  legalLink: { fontSize: 11, color: 'rgba(229,192,123,0.6)', lineHeight: 18, textDecorationLine: 'underline' },
 });
