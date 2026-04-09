@@ -56,9 +56,10 @@ export default function AuthScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={['#0D0900', '#0A0A0C', '#08080F']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <LinearGradient colors={['#0F0A1E', '#0A0A14', '#06060C']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <View style={s.bloomPurple} />
+      <View style={s.bloomIndigo} />
       <View style={s.bloomGold} />
-      <View style={s.bloomRose} />
 
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.flex}>
@@ -68,19 +69,19 @@ export default function AuthScreen() {
             <Animated.View entering={FadeInDown.duration(600)} style={s.logo}>
               <View style={s.logoGlow} />
               <View style={s.logoBox}>
-                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={s.logoGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Text style={s.logoLetter}>F</Text>
+                <LinearGradient colors={['#A78BFA', '#7C3AED', '#4F46E5']} style={s.logoGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="scan-outline" size={36} color="#fff" />
                 </LinearGradient>
               </View>
               <Text style={s.appName}>FaceGlow Pro</Text>
-              <Text style={s.appTag}>AI Destekli Güzellik Analizi</Text>
+              <Text style={s.appTag}>AI Yüz Analizi & Estetik Rehberi</Text>
             </Animated.View>
 
             {/* Tabs */}
             <Animated.View entering={FadeInDown.delay(120).duration(500)} style={s.tabs}>
               {(['login', 'register'] as const).map(m => (
                 <TouchableOpacity key={m} testID={`${m}-tab`} style={[s.tab, mode === m && s.tabOn]} onPress={() => { setMode(m); setError(''); }}>
-                  {mode === m && <LinearGradient colors={['rgba(229,192,123,0.2)', 'rgba(229,192,123,0.06)']} style={StyleSheet.absoluteFill} borderRadius={12} />}
+                  {mode === m && <LinearGradient colors={['rgba(124,58,237,0.22)', 'rgba(124,58,237,0.06)']} style={StyleSheet.absoluteFill} borderRadius={12} />}
                   <Text style={[s.tabTxt, mode === m && s.tabTxtOn]}>{m === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}</Text>
                 </TouchableOpacity>
               ))}
@@ -118,8 +119,8 @@ export default function AuthScreen() {
             {/* Submit */}
             <Animated.View entering={FadeInDown.delay(320).duration(500)}>
               <TouchableOpacity testID="auth-submit-btn" onPress={submit} disabled={loading} activeOpacity={0.85}>
-                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#C9963A']} style={s.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  {loading ? <ActivityIndicator color="#0A0700" /> : <Text style={s.submitTxt}>{mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}</Text>}
+                <LinearGradient colors={['#A78BFA', '#7C3AED', '#4F46E5']} style={s.submitBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitTxt}>{mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}</Text>}
                 </LinearGradient>
               </TouchableOpacity>
             </Animated.View>
@@ -159,25 +160,25 @@ export default function AuthScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1 },
-  bloomGold: { position: 'absolute', top: -80, left: -60, width: 300, height: 300, borderRadius: 150, backgroundColor: '#E5C07B', opacity: 0.16 },
-  bloomRose: { position: 'absolute', bottom: -40, right: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: '#B76E79', opacity: 0.12 },
+  bloomPurple: { position: 'absolute', top: -80, left: -60, width: 300, height: 300, borderRadius: 150, backgroundColor: '#7C3AED', opacity: 0.14 },
+  bloomIndigo: { position: 'absolute', bottom: -40, right: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: '#4F46E5', opacity: 0.10 },
+  bloomGold: { position: 'absolute', top: 100, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: '#E5C07B', opacity: 0.06 },
   safe: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, justifyContent: 'center', paddingVertical: 40 },
 
   logo: { alignItems: 'center', marginBottom: 36 },
-  logoGlow: { position: 'absolute', width: 90, height: 90, borderRadius: 45, backgroundColor: '#E5C07B', opacity: 0.22, transform: [{ scale: 1.5 }] },
+  logoGlow: { position: 'absolute', width: 90, height: 90, borderRadius: 45, backgroundColor: '#7C3AED', opacity: 0.3, transform: [{ scale: 1.5 }] },
   logoBox: { width: 80, height: 80, borderRadius: 24, overflow: 'hidden', marginBottom: 14 },
   logoGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { fontSize: 40, fontWeight: '900', color: '#1A0E00' },
   appName: { fontSize: 26, fontWeight: '800', color: '#FFF', letterSpacing: 0.5, marginBottom: 6 },
-  appTag: { fontSize: 13, color: '#E5C07B', opacity: 0.8 },
+  appTag: { fontSize: 13, color: '#818CF8', opacity: 0.9 },
 
-  tabs: { flexDirection: 'row', marginBottom: 22, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
+  tabs: { flexDirection: 'row', marginBottom: 22, backgroundColor: 'rgba(124,58,237,0.07)', borderRadius: 14, padding: 4, borderWidth: 1, borderColor: 'rgba(124,58,237,0.2)' },
   tab: { flex: 1, paddingVertical: 13, alignItems: 'center', borderRadius: 12, overflow: 'hidden' },
-  tabOn: { borderWidth: 1, borderColor: 'rgba(229,192,123,0.3)' },
+  tabOn: { borderWidth: 1, borderColor: 'rgba(124,58,237,0.4)' },
   tabTxt: { fontSize: 15, color: 'rgba(255,255,255,0.35)', fontWeight: '600' },
-  tabTxtOn: { color: '#E5C07B' },
+  tabTxtOn: { color: '#A78BFA' },
 
   errBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,69,58,0.1)', borderRadius: 12, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(255,69,58,0.25)' },
   errTxt: { fontSize: 13, color: '#FF453A', flex: 1 },
@@ -189,13 +190,13 @@ const s = StyleSheet.create({
   eye: { padding: 4 },
 
   submitBtn: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', marginTop: 8 },
-  submitTxt: { fontSize: 17, fontWeight: '800', color: '#0A0700' },
+  submitTxt: { fontSize: 17, fontWeight: '800', color: '#FFFFFF' },
 
   div: { flexDirection: 'row', alignItems: 'center', marginVertical: 22 },
   divLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   divTxt: { fontSize: 13, color: 'rgba(255,255,255,0.3)', marginHorizontal: 14 },
 
-  google: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 16, paddingVertical: 16 },
+  google: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: 'rgba(124,58,237,0.08)', borderWidth: 1, borderColor: 'rgba(124,58,237,0.2)', borderRadius: 16, paddingVertical: 16 },
   googleTxt: { fontSize: 15, color: '#FFF', fontWeight: '600' },
 
   legalRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 24 },
