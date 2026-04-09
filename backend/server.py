@@ -225,6 +225,82 @@ async def google_session(data: SessionRequest):
 
 # ==================== FACE ANALYSIS ====================
 
+FACE_SHAPES = ["oval", "kalp", "kare", "yuvarlak", "elmas", "dikdörtgen"]
+
+FACE_SHAPE_TIPS = {
+    "oval": {
+        "description": "Oval yüz şekli, en dengeli ve orantılı yüz tiplerinden biridir. Alın ve çene yaklaşık aynı genişlikte, elmacıklar en geniş noktadır.",
+        "makeup": "Neredeyse her makyaj trendi size yakışır. Keskin kontur çalışması elmacıkları vurgulayabilir.",
+        "hair": "Her saç kesimi size uyar. Katlı kesimler ve dalgalı stiller yüz hatlarınızı güzelleştirir.",
+        "glasses": "Kare, dikdörtgen, yuvarlak ve kelebek çerçeveler çok yakışır.",
+    },
+    "kalp": {
+        "description": "Kalp yüz şeklinde alın geniş, çene ise daha dar ve sivridir. Elmacık kemikleri belirgindir.",
+        "makeup": "Çene bölgesini aydınlatmak için highlighter kullanın. Alından elmacıklara doğru kontür çekin.",
+        "hair": "Çeneye doğru uzanan orta boy kesimler ve yan ayırmalar çok yakışır. Saçı çeneye kadar indirmek yüzü dengeler.",
+        "glasses": "Altı geniş çerçeveler (aviator, kelebek) yüzü dengeler. Ağır üst çerçevelerden kaçının.",
+    },
+    "kare": {
+        "description": "Kare yüz şeklinde alın, elmacık ve çene genişlikleri birbirine yakındır. Çene köşeleri belirgindir.",
+        "makeup": "Çene köşelerine kontür uygulayarak yumuşatın. Elmacıkları çapraz konturla ön plana çıkarın.",
+        "hair": "Uzun, katlı kesimler ve dalgalar yüzü uzatır ve yumuşatır. Saçı yanlardan dolgunlaştırmaktan kaçının.",
+        "glasses": "Yuvarlak ve oval çerçeveler sert hatları yumuşatır. Kare ve dikdörtgen çerçevelerden kaçının.",
+    },
+    "yuvarlak": {
+        "description": "Yuvarlak yüz şeklinde en, boy oranı birbirine yakındır ve yüzün dış hatları yuvarlaklık gösterir.",
+        "makeup": "Alın ve çeneye kontür yaparak yüzü uzatın. Elmacıkların üstünü aydınlatın.",
+        "hair": "Uzun, düz veya hafif dalgalı saçlar yüzü uzatır. Saç üstte hacim, yanlarda yassılık sağlamalı.",
+        "glasses": "Dikdörtgen ve kare çerçeveler yüzü uzatır ve güçlü görünüm verir.",
+    },
+    "elmas": {
+        "description": "Elmas yüz şeklinde elmacık kemikleri en geniş noktadır, alın ve çene ise dardır.",
+        "makeup": "Alın ve çeneyi aydınlatın, elmacık altına ince kontür çekin.",
+        "hair": "Yanlardan dolgunluk katan kesimler ve tam fringe (perçem) dengeyi sağlar.",
+        "glasses": "Oval ve kedi gözü çerçeveler elmacıkları dengeler ve zarif görünüm verir.",
+    },
+    "dikdörtgen": {
+        "description": "Dikdörtgen yüz şeklinde yüz boyca uzundur, alın, elmacık ve çene yaklaşık aynı genişliktedir.",
+        "makeup": "Alın ve çeneye kontür yaparak yüzü görsel olarak kısaltın. Yatay kontur çizgileri tercih edin.",
+        "hair": "Yanlardan dolgun, kısa ve orta boy saçlar yüzü dengeler. Uzun düz saçtan kaçının.",
+        "glasses": "Büyük, yuvarlak veya kelebek çerçeveler yüzü dengeler ve kısaltarak gösterir.",
+    },
+}
+
+PROCEDURE_COSTS_TL = {
+    "Rinoplasti": {"min": 80000, "max": 200000, "currency": "TL"},
+    "Çene Kontürleme": {"min": 60000, "max": 150000, "currency": "TL"},
+    "Mentoplasti": {"min": 50000, "max": 120000, "currency": "TL"},
+    "Simetri Düzeltmesi": {"min": 40000, "max": 100000, "currency": "TL"},
+    "Blefaroplasti": {"min": 35000, "max": 90000, "currency": "TL"},
+    "Lazer Cilt Yenileme": {"min": 5000, "max": 20000, "currency": "TL"},
+    "Dudak Dolgusu": {"min": 3000, "max": 8000, "currency": "TL"},
+    "Botoks ile Çene İncelme": {"min": 4000, "max": 12000, "currency": "TL"},
+    "Alın Botoksu": {"min": 3000, "max": 9000, "currency": "TL"},
+    "Elmacık Dolgusu": {"min": 4000, "max": 14000, "currency": "TL"},
+    "Koruyucu Bakım": {"min": 500, "max": 2000, "currency": "TL"},
+}
+
+def detect_face_shape_from_metrics(metrics: dict) -> str:
+    """Metriklerden yüz şeklini tahmin et."""
+    jawline = metrics.get("jawline_definition", 0.7)
+    cheekbone = metrics.get("cheekbone_prominence", 0.7)
+    forehead = metrics.get("forehead_proportion", 0.7)
+    chin = metrics.get("chin_projection", 0.7)
+    symmetry = metrics.get("symmetry_score", 0.8)
+
+    if cheekbone > 0.82 and chin < 0.62:
+        return "elmas"
+    elif forehead > 0.80 and chin < 0.65:
+        return "kalp"
+    elif jawline > 0.82 and symmetry > 0.85:
+        return "kare"
+    elif jawline < 0.65 and cheekbone < 0.68:
+        return "yuvarlak"
+    elif forehead < 0.68 and jawline < 0.72:
+        return "dikdörtgen"
+    else:
+        return "oval"
+
 def generate_face_metrics(seed_str: str = "") -> dict:
     """Fallback: AI key yoksa rastgele metrik üret."""
     if seed_str:
@@ -242,6 +318,8 @@ def generate_face_metrics(seed_str: str = "") -> dict:
         "overall_harmony": round(random.uniform(0.65, 0.92), 2),
     }
     random.seed()
+    face_shape = detect_face_shape_from_metrics(m)
+    m["face_shape"] = face_shape
     return m
 
 async def analyze_face_with_ai(photo_base64: str, category: str) -> dict:
@@ -254,6 +332,7 @@ async def analyze_face_with_ai(photo_base64: str, category: str) -> dict:
         cat_text = "cerrahi estetik (ameliyat)" if category == "cerrahi" else "medikal estetik (ameliyatsız)"
         system_prompt = """Sen uzman bir estetik cerrah ve yüz analizi yapay zekasısın.
 Verilen yüz fotoğrafını analiz et ve aşağıdaki metrikleri 0.0-1.0 arasında puanla.
+face_shape için sadece şu değerlerden birini kullan: oval, kalp, kare, yuvarlak, elmas, dikdörtgen
 SADECE geçerli JSON döndür, başka hiçbir şey yazma:
 {
   "symmetry_score": 0.0,
@@ -265,9 +344,10 @@ SADECE geçerli JSON döndür, başka hiçbir şey yazma:
   "cheekbone_prominence": 0.0,
   "forehead_proportion": 0.0,
   "chin_projection": 0.0,
-  "overall_harmony": 0.0
+  "overall_harmony": 0.0,
+  "face_shape": "oval"
 }"""
-        user_prompt = f"Bu yüzü {cat_text} kategorisinde analiz et. Metrikleri gerçekçi ve detaylı değerlendir."
+        user_prompt = f"Bu yüzü {cat_text} kategorisinde analiz et. Metrikleri gerçekçi ve detaylı değerlendir. Yüz şeklini de belirle."
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -275,7 +355,7 @@ SADECE geçerli JSON döndür, başka hiçbir şey yazma:
                 headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
                 json={
                     "model": "gpt-4o",
-                    "max_tokens": 300,
+                    "max_tokens": 350,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": [
@@ -292,43 +372,68 @@ SADECE geçerli JSON döndür, başka hiçbir şey yazma:
         content = data["choices"][0]["message"]["content"].strip()
         if content.startswith("```"):
             content = "\n".join(content.split("\n")[1:-1])
+            if content.startswith("json"):
+                content = content[4:].strip()
         metrics = json.loads(content)
+        face_shape = metrics.pop("face_shape", None)
         # Değerlerin 0-1 arasında olduğunu garantile
-        for k in metrics:
+        for k in list(metrics.keys()):
             metrics[k] = round(max(0.0, min(1.0, float(metrics[k]))), 2)
+        if face_shape and face_shape in FACE_SHAPES:
+            metrics["face_shape"] = face_shape
+        else:
+            metrics["face_shape"] = detect_face_shape_from_metrics(metrics)
         return metrics
     except Exception as e:
         logger.error(f"AI yüz analizi hatası: {e}")
         return generate_face_metrics(photo_base64[:80])
 
+def add_cost_estimate(rec: dict) -> dict:
+    title = rec.get("title", "")
+    cost = PROCEDURE_COSTS_TL.get(title)
+    if cost:
+        rec["cost_min_tl"] = cost["min"]
+        rec["cost_max_tl"] = cost["max"]
+    return rec
+
 def generate_fallback_recommendations(metrics: dict, category: str) -> dict:
     recs = []
     if category == "cerrahi":
-        if metrics["nose_proportion"] < 0.78:
-            recs.append({"area": "Burun", "title": "Rinoplasti", "description": "Burun oranlarınız ideal değerlerden sapma gösteriyor. Rinoplasti ile burun yapısı daha dengeli hale getirilebilir.", "reason": f"Burun oranı: {metrics['nose_proportion']:.2f} (ideal: 0.85+)", "priority": "high", "improvement_potential": 0.85})
-        if metrics["jawline_definition"] < 0.70:
-            recs.append({"area": "Çene Hattı", "title": "Çene Kontürleme", "description": "Çene hattınız cerrahi kontürleme ile daha belirgin ve keskin hale getirilebilir.", "reason": f"Çene tanımı: {metrics['jawline_definition']:.2f} (ideal: 0.80+)", "priority": "high", "improvement_potential": 0.75})
-        if metrics["chin_projection"] < 0.65:
-            recs.append({"area": "Çene Ucu", "title": "Mentoplasti", "description": "Çene ucu projeksiyonu güçlendirilerek yüz dengesi iyileştirilebilir.", "reason": f"Çene çıkıntısı: {metrics['chin_projection']:.2f} (ideal: 0.75+)", "priority": "medium", "improvement_potential": 0.65})
-        if metrics["symmetry_score"] < 0.82:
-            recs.append({"area": "Yüz Simetrisi", "title": "Simetri Düzeltmesi", "description": "Yüz simetrinizde hafif dengesizlik tespit edildi.", "reason": f"Simetri: {metrics['symmetry_score']:.2f} (ideal: 0.90+)", "priority": "medium", "improvement_potential": 0.60})
-        if metrics["eye_spacing"] < 0.75:
-            recs.append({"area": "Göz Bölgesi", "title": "Blefaroplasti", "description": "Göz kapağı estetiği ile daha genç ve dinlenmiş bir görünüm.", "reason": f"Göz aralığı: {metrics['eye_spacing']:.2f} (ideal: 0.85+)", "priority": "low", "improvement_potential": 0.50})
+        if metrics.get("nose_proportion", 1) < 0.78:
+            recs.append({"area": "Burun", "title": "Rinoplasti", "description": "Burun oranlarınız ideal değerlerden sapma gösteriyor. Rinoplasti ile burun yapısı daha dengeli hale getirilebilir.", "reason": f"Burun oranı: {metrics.get('nose_proportion', 0):.2f} (ideal: 0.85+)", "priority": "high", "improvement_potential": 0.85})
+        if metrics.get("jawline_definition", 1) < 0.70:
+            recs.append({"area": "Çene Hattı", "title": "Çene Kontürleme", "description": "Çene hattınız cerrahi kontürleme ile daha belirgin ve keskin hale getirilebilir.", "reason": f"Çene tanımı: {metrics.get('jawline_definition', 0):.2f} (ideal: 0.80+)", "priority": "high", "improvement_potential": 0.75})
+        if metrics.get("chin_projection", 1) < 0.65:
+            recs.append({"area": "Çene Ucu", "title": "Mentoplasti", "description": "Çene ucu projeksiyonu güçlendirilerek yüz dengesi iyileştirilebilir.", "reason": f"Çene çıkıntısı: {metrics.get('chin_projection', 0):.2f} (ideal: 0.75+)", "priority": "medium", "improvement_potential": 0.65})
+        if metrics.get("symmetry_score", 1) < 0.82:
+            recs.append({"area": "Yüz Simetrisi", "title": "Simetri Düzeltmesi", "description": "Yüz simetrinizde hafif dengesizlik tespit edildi.", "reason": f"Simetri: {metrics.get('symmetry_score', 0):.2f} (ideal: 0.90+)", "priority": "medium", "improvement_potential": 0.60})
+        if metrics.get("eye_spacing", 1) < 0.75:
+            recs.append({"area": "Göz Bölgesi", "title": "Blefaroplasti", "description": "Göz kapağı estetiği ile daha genç ve dinlenmiş bir görünüm.", "reason": f"Göz aralığı: {metrics.get('eye_spacing', 0):.2f} (ideal: 0.85+)", "priority": "low", "improvement_potential": 0.50})
     else:
-        if metrics["skin_quality"] < 0.75:
-            recs.append({"area": "Cilt", "title": "Lazer Cilt Yenileme", "description": "Cildiniz profesyonel lazer tedavisi ile önemli ölçüde iyileştirilebilir.", "reason": f"Cilt kalitesi: {metrics['skin_quality']:.2f} (ideal: 0.85+)", "priority": "high", "improvement_potential": 0.85})
-        if metrics["lip_ratio"] < 0.72:
-            recs.append({"area": "Dudak", "title": "Dudak Dolgusu", "description": "Dudak oranlarınız hyalüronik asit dolgusu ile doğal bir şekilde dengelenebilir.", "reason": f"Dudak oranı: {metrics['lip_ratio']:.2f} (ideal: 0.80+)", "priority": "high", "improvement_potential": 0.75})
-        if metrics["jawline_definition"] < 0.70:
-            recs.append({"area": "Çene Hattı", "title": "Botoks ile Çene İncelme", "description": "Masseter botoksu ile çene hattı inceltilerek zarif bir görünüm elde edilebilir.", "reason": f"Çene tanımı: {metrics['jawline_definition']:.2f} (ideal: 0.80+)", "priority": "medium", "improvement_potential": 0.70})
-        if metrics["forehead_proportion"] < 0.72:
-            recs.append({"area": "Alın", "title": "Alın Botoksu", "description": "Alın bölgesinde botoks ile kırışıklıklar giderilerek pürüzsüz görünüm sağlanabilir.", "reason": f"Alın oranı: {metrics['forehead_proportion']:.2f} (ideal: 0.80+)", "priority": "medium", "improvement_potential": 0.60})
-        if metrics["cheekbone_prominence"] < 0.65:
-            recs.append({"area": "Elmacık Kemiği", "title": "Elmacık Dolgusu", "description": "Elmacık kemikleri dolgu ile vurgulanarak yüze hacim kazandırılabilir.", "reason": f"Elmacık: {metrics['cheekbone_prominence']:.2f} (ideal: 0.75+)", "priority": "low", "improvement_potential": 0.55})
+        if metrics.get("skin_quality", 1) < 0.75:
+            recs.append({"area": "Cilt", "title": "Lazer Cilt Yenileme", "description": "Cildiniz profesyonel lazer tedavisi ile önemli ölçüde iyileştirilebilir.", "reason": f"Cilt kalitesi: {metrics.get('skin_quality', 0):.2f} (ideal: 0.85+)", "priority": "high", "improvement_potential": 0.85})
+        if metrics.get("lip_ratio", 1) < 0.72:
+            recs.append({"area": "Dudak", "title": "Dudak Dolgusu", "description": "Dudak oranlarınız hyalüronik asit dolgusu ile doğal bir şekilde dengelenebilir.", "reason": f"Dudak oranı: {metrics.get('lip_ratio', 0):.2f} (ideal: 0.80+)", "priority": "high", "improvement_potential": 0.75})
+        if metrics.get("jawline_definition", 1) < 0.70:
+            recs.append({"area": "Çene Hattı", "title": "Botoks ile Çene İncelme", "description": "Masseter botoksu ile çene hattı inceltilerek zarif bir görünüm elde edilebilir.", "reason": f"Çene tanımı: {metrics.get('jawline_definition', 0):.2f} (ideal: 0.80+)", "priority": "medium", "improvement_potential": 0.70})
+        if metrics.get("forehead_proportion", 1) < 0.72:
+            recs.append({"area": "Alın", "title": "Alın Botoksu", "description": "Alın bölgesinde botoks ile kırışıklıklar giderilerek pürüzsüz görünüm sağlanabilir.", "reason": f"Alın oranı: {metrics.get('forehead_proportion', 0):.2f} (ideal: 0.80+)", "priority": "medium", "improvement_potential": 0.60})
+        if metrics.get("cheekbone_prominence", 1) < 0.65:
+            recs.append({"area": "Elmacık Kemiği", "title": "Elmacık Dolgusu", "description": "Elmacık kemikleri dolgu ile vurgulanarak yüze hacim kazandırılabilir.", "reason": f"Elmacık: {metrics.get('cheekbone_prominence', 0):.2f} (ideal: 0.75+)", "priority": "low", "improvement_potential": 0.55})
     if not recs:
         recs.append({"area": "Genel", "title": "Koruyucu Bakım", "description": "Yüz metrikleriniz genel olarak iyi durumda.", "reason": "Tüm metrikler kabul edilebilir seviyede", "priority": "low", "improvement_potential": 0.30})
-    score = round(sum(metrics.values()) / len(metrics) * 10, 1)
-    return {"summary": f"Yüz analizi tamamlandı. Genel uyum skorunuz {score}/10.", "recommendations": recs, "overall_score": score}
+    recs = [add_cost_estimate(r) for r in recs]
+    numeric_vals = [v for v in metrics.values() if isinstance(v, (int, float))]
+    score = round(sum(numeric_vals) / len(numeric_vals) * 10, 1) if numeric_vals else 7.0
+    face_shape = metrics.get("face_shape", "oval")
+    shape_tips = FACE_SHAPE_TIPS.get(face_shape, FACE_SHAPE_TIPS["oval"])
+    return {
+        "summary": f"Yüz analizi tamamlandı. Genel uyum skorunuz {score}/10.",
+        "recommendations": recs,
+        "overall_score": score,
+        "face_shape": face_shape,
+        "face_shape_tips": shape_tips,
+    }
 
 @api_router.post("/analysis/create")
 async def create_analysis(data: AnalysisCreate, request: Request):
@@ -389,6 +494,12 @@ Bu metriklere göre detaylı ve kişiselleştirilmiş Türkçe öneriler üret."
                 if content.startswith("json"):
                     content = content[4:].strip()
             recs_data = json.loads(content)
+            # Add cost estimates and face shape to GPT-generated recs too
+            if "recommendations" in recs_data:
+                recs_data["recommendations"] = [add_cost_estimate(r) for r in recs_data["recommendations"]]
+            face_shape = metrics.get("face_shape", detect_face_shape_from_metrics(metrics))
+            recs_data["face_shape"] = face_shape
+            recs_data["face_shape_tips"] = FACE_SHAPE_TIPS.get(face_shape, FACE_SHAPE_TIPS["oval"])
         except Exception as e:
             logger.error(f"GPT-4o öneri hatası: {e}")
             recs_data = generate_fallback_recommendations(metrics, category)
@@ -415,17 +526,36 @@ async def generate_transformation(analysis_id: str, request: Request):
     improvements = ", ".join([r.get("title", "") for r in rec_list[:4]])
     category = analysis.get("category", "medikal")
     cat_label = "cerrahi estetik" if category == "cerrahi" else "medikal estetik"
-    prompt = f"""Profesyonel güzellik portre fotoğrafı. {cat_label} işlemleri sonrası ideal sonuç gösterimi.
-Uygulanan iyileştirmeler: {improvements}. Doğal, fotorealistik. Yumuşak stüdyo ışığı. Alt köşede "AI Simülasyonu"."""
+    prompt = (
+        f"A professional beauty portrait photo showing ideal results after {cat_label} aesthetic procedures. "
+        f"Enhancements applied: {improvements}. "
+        "Natural, photorealistic appearance. Soft studio lighting. Subtle 'AI Simulation' watermark in the corner. "
+        "High quality professional headshot."
+    )
+    api_key = OPENAI_API_KEY or EMERGENT_LLM_KEY
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Görsel üretimi için API anahtarı gerekli")
     try:
-        from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
-        image_gen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
-        images = await image_gen.generate_images(prompt=prompt, model="gpt-image-1", number_of_images=1)
-        if images and len(images) > 0:
-            img_b64 = base64.b64encode(images[0]).decode("utf-8")
-            await db.analyses.update_one({"analysis_id": analysis_id}, {"$set": {"transformation_base64": img_b64, "is_unlocked": True}})
-            return {"transformation_base64": img_b64, "status": "completed"}
-        raise HTTPException(status_code=500, detail="Görsel oluşturulamadı")
+        import httpx
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/images/generations",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "dall-e-3",
+                    "prompt": prompt,
+                    "n": 1,
+                    "size": "1024x1024",
+                    "response_format": "b64_json",
+                    "quality": "standard",
+                }
+            )
+        if not resp.is_success:
+            logger.error(f"DALL-E hatası: {resp.status_code} {resp.text[:400]}")
+            raise HTTPException(status_code=500, detail="Görsel üretilemedi")
+        img_b64 = resp.json()["data"][0]["b64_json"]
+        await db.analyses.update_one({"analysis_id": analysis_id}, {"$set": {"transformation_base64": img_b64, "is_unlocked": True}})
+        return {"transformation_base64": img_b64, "status": "completed"}
     except HTTPException:
         raise
     except Exception as e:
@@ -487,6 +617,130 @@ async def update_language(data: LanguagePref, request: Request):
     user = await get_current_user(request)
     await db.users.update_one({"user_id": user["user_id"]}, {"$set": {"language": data.language}})
     return {"language": data.language}
+
+# ==================== PROCEDURE CATALOG ====================
+
+PROCEDURE_CATALOG = [
+    {
+        "id": "rinoplasti",
+        "title": "Rinoplasti",
+        "category": "cerrahi",
+        "icon": "cut-outline",
+        "description": "Burun estetiği, burun şeklini ve oranlarını düzelterek yüz uyumunu artırır. Türkiye'de en çok yapılan estetik operasyonlar arasındadır.",
+        "duration_min": 60,
+        "duration_max": 180,
+        "recovery_days": 14,
+        "cost_min_tl": 80000,
+        "cost_max_tl": 200000,
+        "popularity_pct": 88,
+        "risk_level": "orta",
+        "benefits": ["Burun oranlarını düzeltir", "Nefes almayı iyileştirebilir", "Yüz simetrisini artırır"],
+    },
+    {
+        "id": "dudak_dolgusu",
+        "title": "Dudak Dolgusu",
+        "category": "medikal",
+        "icon": "sparkles-outline",
+        "description": "Hyalüronik asit bazlı dolgu ile dudak hacmi ve şekli iyileştirilir. Etkisi 6-12 ay sürer.",
+        "duration_min": 15,
+        "duration_max": 30,
+        "recovery_days": 1,
+        "cost_min_tl": 3000,
+        "cost_max_tl": 8000,
+        "popularity_pct": 94,
+        "risk_level": "düşük",
+        "benefits": ["Anında görünür sonuç", "Doğal görünüm", "Kalıcı değil, tersine çevrilebilir"],
+    },
+    {
+        "id": "botoks",
+        "title": "Botoks",
+        "category": "medikal",
+        "icon": "flash-outline",
+        "description": "Botulinum toksin enjeksiyonu ile kırışıklıklar düzeltilir ve yüz kasları gevşetilir. 4-6 ay etki süresi.",
+        "duration_min": 15,
+        "duration_max": 30,
+        "recovery_days": 0,
+        "cost_min_tl": 3000,
+        "cost_max_tl": 12000,
+        "popularity_pct": 97,
+        "risk_level": "düşük",
+        "benefits": ["Hızlı uygulama", "İnce çizgileri giderir", "Önleyici etki"],
+    },
+    {
+        "id": "lazer_cilt",
+        "title": "Lazer Cilt Yenileme",
+        "category": "medikal",
+        "icon": "scan-outline",
+        "description": "Lazer teknolojisi ile cilt lekelerini, ince çizgileri ve gözenekleri iyileştirir. Birden fazla seans gerekebilir.",
+        "duration_min": 30,
+        "duration_max": 60,
+        "recovery_days": 3,
+        "cost_min_tl": 5000,
+        "cost_max_tl": 20000,
+        "popularity_pct": 79,
+        "risk_level": "düşük",
+        "benefits": ["Cilt dokusunu iyileştirir", "Leke ve izleri azaltır", "Gençleştirici etki"],
+    },
+    {
+        "id": "elmacik_dolgusu",
+        "title": "Elmacık Dolgusu",
+        "category": "medikal",
+        "icon": "diamond-outline",
+        "description": "Elmacık kemiklerine dolgu uygulanarak yüze hacim ve yükseklik kazandırılır.",
+        "duration_min": 20,
+        "duration_max": 40,
+        "recovery_days": 1,
+        "cost_min_tl": 4000,
+        "cost_max_tl": 14000,
+        "popularity_pct": 72,
+        "risk_level": "düşük",
+        "benefits": ["Yüze yapı kazandırır", "Yüz hatlarını belirginleştirir", "Gençleştirici etki"],
+    },
+    {
+        "id": "blefaroplasti",
+        "title": "Blefaroplasti",
+        "category": "cerrahi",
+        "icon": "eye-outline",
+        "description": "Göz kapağı ameliyatı ile sarkık veya torba oluşmuş göz kapakları düzeltilir.",
+        "duration_min": 60,
+        "duration_max": 120,
+        "recovery_days": 10,
+        "cost_min_tl": 35000,
+        "cost_max_tl": 90000,
+        "popularity_pct": 65,
+        "risk_level": "orta",
+        "benefits": ["Dinlenmiş görünüm", "Görüş alanı genişler", "Kalıcı sonuç"],
+    },
+    {
+        "id": "mentoplasti",
+        "title": "Mentoplasti",
+        "category": "cerrahi",
+        "icon": "git-branch-outline",
+        "description": "Çene ucuna implant veya liposuction ile şekil verilerek yüz profili iyileştirilir.",
+        "duration_min": 45,
+        "duration_max": 90,
+        "recovery_days": 7,
+        "cost_min_tl": 50000,
+        "cost_max_tl": 120000,
+        "popularity_pct": 58,
+        "risk_level": "orta",
+        "benefits": ["Profil dengesi sağlar", "Kalıcı sonuç", "Boyun hatlarını iyileştirir"],
+    },
+]
+
+@api_router.get("/procedures")
+async def get_procedures(category: Optional[str] = None):
+    """Prosedür kataloğunu döndürür. category=cerrahi veya medikal ile filtrelenebilir."""
+    if category and category in ("cerrahi", "medikal"):
+        return {"procedures": [p for p in PROCEDURE_CATALOG if p["category"] == category]}
+    return {"procedures": PROCEDURE_CATALOG}
+
+@api_router.get("/face-shape/{shape}")
+async def get_face_shape_tips(shape: str):
+    """Belirli bir yüz şekline ait ipuçlarını döndürür."""
+    if shape not in FACE_SHAPES:
+        raise HTTPException(status_code=400, detail=f"Geçersiz yüz şekli. Geçerli değerler: {', '.join(FACE_SHAPES)}")
+    return {"face_shape": shape, "tips": FACE_SHAPE_TIPS[shape]}
 
 # ==================== HEALTH ====================
 

@@ -56,6 +56,7 @@ const mStyles = StyleSheet.create({
 
 function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
   const prioColor = rec.priority === 'high' ? COLORS.status.error : rec.priority === 'medium' ? COLORS.status.warning : COLORS.status.success;
+  const hasCost = rec.cost_min_tl != null && rec.cost_max_tl != null;
   return (
     <View style={[rStyles.card, locked && rStyles.locked]}>
       <View style={rStyles.header}>
@@ -67,7 +68,17 @@ function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
         </View>
         <Text style={rStyles.area}>{rec.area}</Text>
       </View>
-      <Text style={rStyles.title}>{rec.title}</Text>
+      <View style={rStyles.titleRow}>
+        <Text style={rStyles.title}>{rec.title}</Text>
+        {hasCost && (
+          <View style={rStyles.costBadge}>
+            <Ionicons name="cash-outline" size={12} color="#E5C07B" />
+            <Text style={rStyles.costText}>
+              {(rec.cost_min_tl / 1000).toFixed(0)}K–{(rec.cost_max_tl / 1000).toFixed(0)}K ₺
+            </Text>
+          </View>
+        )}
+      </View>
       {locked ? (
         <View style={rStyles.lockRow}>
           <Ionicons name="lock-closed" size={16} color={COLORS.brand.primary} />
@@ -97,7 +108,10 @@ const rStyles = StyleSheet.create({
   prioDot: { width: 6, height: 6, borderRadius: 3 },
   prioText: { ...FONT.xs, fontWeight: '700' },
   area: { ...FONT.xs, color: COLORS.text.tertiary },
-  title: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 10 },
+  title: { ...FONT.h4, color: COLORS.text.primary, flex: 1 },
+  costBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(229,192,123,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(229,192,123,0.25)' },
+  costText: { fontSize: 11, fontWeight: '700', color: '#E5C07B' },
   desc: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20, marginBottom: 6 },
   reason: { ...FONT.xs, color: COLORS.text.tertiary, fontStyle: 'italic', marginBottom: 10 },
   improvRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
@@ -271,23 +285,70 @@ export default function ResultsScreen() {
             </Animated.View>
           ) : null}
 
+          {/* Face Shape Card */}
+          {recs.face_shape ? (
+            <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Yüz Şekli Analizi</Text>
+              <View style={styles.faceShapeCard}>
+                <View style={styles.faceShapeHeader}>
+                  <LinearGradient colors={['rgba(229,192,123,0.25)', 'rgba(229,192,123,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name="scan-outline" size={22} color="#E5C07B" />
+                  </LinearGradient>
+                  <View style={styles.faceShapeMeta}>
+                    <Text style={styles.faceShapeName}>{recs.face_shape.charAt(0).toUpperCase() + recs.face_shape.slice(1)} Yüz</Text>
+                    <Text style={styles.faceShapeDesc} numberOfLines={2}>{recs.face_shape_tips?.description}</Text>
+                  </View>
+                </View>
+                {recs.face_shape_tips?.makeup ? (
+                  <View style={styles.faceShapeTipRow}>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipContent}>
+                      <Text style={styles.faceShapeTipLabel}>Makyaj</Text>
+                      <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.makeup}</Text>
+                    </View>
+                  </View>
+                ) : null}
+                {recs.face_shape_tips?.hair ? (
+                  <View style={styles.faceShapeTipRow}>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipContent}>
+                      <Text style={styles.faceShapeTipLabel}>Saç</Text>
+                      <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.hair}</Text>
+                    </View>
+                  </View>
+                ) : null}
+                {recs.face_shape_tips?.glasses ? (
+                  <View style={styles.faceShapeTipRow}>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipContent}>
+                      <Text style={styles.faceShapeTipLabel}>Gözlük</Text>
+                      <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.glasses}</Text>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            </Animated.View>
+          ) : null}
+
           {/* Metrics */}
-          <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(250).duration(400)} style={styles.section}>
             <Text style={styles.sectionTitle}>Yüz Metrikleri</Text>
             <View style={styles.metricsCard}>
-              {Object.entries(metrics).map(([key, val], i) => (
-                <AnimatedMetricBar
-                  key={key}
-                  label={METRIC_LABELS[key] || key}
-                  value={val as number}
-                  delay={i * 60}
-                />
-              ))}
+              {Object.entries(metrics)
+                .filter(([key]) => key !== 'face_shape')
+                .map(([key, val], i) => (
+                  <AnimatedMetricBar
+                    key={key}
+                    label={METRIC_LABELS[key] || key}
+                    value={val as number}
+                    delay={i * 60}
+                  />
+                ))}
             </View>
           </Animated.View>
 
           {/* Recommendations */}
-          <Animated.View entering={FadeInDown.delay(350).duration(400)} style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
             <Text style={styles.sectionTitle}>{t('recommendations')}</Text>
             {recList.map((rec: any, i: number) => (
               <RecCard key={i} rec={rec} locked={!isPremium && i > 0} />
@@ -473,11 +534,10 @@ export default function ResultsScreen() {
                   <View style={styles.pricingRow}>
                     <View>
                       <Text style={styles.pricingFree}>İlk 7 gün ücretsiz</Text>
-                      <Text style={styles.pricingAfter}>Sonrasında aylık otomatik yenilenir</Text>
+                      <Text style={styles.pricingAfter}>Sonrasında aylık ₺599 otomatik yenilenir</Text>
                     </View>
                     <View style={styles.pricingRight}>
-                      <Text style={styles.pricingOld}>₺299</Text>
-                      <Text style={styles.pricingNow}>₺149</Text>
+                      <Text style={styles.pricingNow}>₺599/ay</Text>
                     </View>
                   </View>
                 </LinearGradient>
@@ -685,7 +745,6 @@ const styles = StyleSheet.create({
   pricingFree: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
   pricingAfter: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 2 },
   pricingRight: { alignItems: 'flex-end' },
-  pricingOld: { fontSize: 13, color: COLORS.text.tertiary, textDecorationLine: 'line-through' },
   pricingNow: { fontSize: 22, fontWeight: '800', color: COLORS.brand.primary },
   // Button
   paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 12 },
@@ -702,4 +761,17 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,100,100,0.3)',
   },
   devBypassText: { fontSize: 12, color: '#FF6464', fontWeight: '700' },
+
+  // Face Shape Card
+  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  faceShapeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 16 },
+  faceShapeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  faceShapeMeta: { flex: 1 },
+  faceShapeName: { fontSize: 17, fontWeight: '700', color: '#E5C07B', marginBottom: 4 },
+  faceShapeDesc: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
+  faceShapeTipRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(229,192,123,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  faceShapeTipContent: { flex: 1 },
+  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: '#E5C07B', letterSpacing: 0.5, marginBottom: 3 },
+  faceShapeTipText: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
 });
