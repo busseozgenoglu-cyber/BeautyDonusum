@@ -2,10 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-if (!BACKEND_URL && __DEV__) {
-  console.warn('[api] EXPO_PUBLIC_BACKEND_URL is not set. API calls will fail. Set it in your .env file.');
-}
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://beautydonusum-production.up.railway.app';
 
 const api = axios.create({ baseURL: `${BACKEND_URL}/api`, timeout: 120000 });
 
