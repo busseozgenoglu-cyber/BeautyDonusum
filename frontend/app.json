@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "FaceGlow Pro",
-    "slug": "faceglow-pro",
+    "name": "Estetik Pusula",
+    "slug": "estetik-pusula",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "faceglowpro",
-    "userInterfaceStyle": "dark",
+    "scheme": "estetikpusula",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-image.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0A0A"
+      "backgroundColor": "#FAFBFE"
     },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.beautydonusum.app",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.estetikpusula.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Yüz analiziniz için fotoğraf çekiyoruz.",
@@ -31,10 +31,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0A0A0A"
+        "backgroundColor": "#FAFBFE"
       },
-      "package": "com.beautydonusum.app",
-      "versionCode": 2,
+      "package": "com.estetikpusula.app",
+      "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",

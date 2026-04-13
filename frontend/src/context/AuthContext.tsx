@@ -77,23 +77,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const autoLogin = async () => {
-    // Mevcut token varsa zaten giriş yapılmış
     try {
       const { data } = await api.get('/auth/me');
       setUser(data);
       return;
     } catch {}
 
-    // Cihaza özel kalıcı kimlik bilgileri oluştur
     let deviceId = await SecureStore.getItemAsync('device_id');
     if (!deviceId) {
       deviceId = 'device_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
       await SecureStore.setItemAsync('device_id', deviceId);
     }
-    const email = `${deviceId}@faceglowpro.app`;
+    const email = `${deviceId}@estetikpusula.app`;
     const password = deviceId;
 
-    // Login dene
     try {
       const { data } = await api.post('/auth/login', { email, password });
       await setToken(data.token);
@@ -101,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     } catch {}
 
-    // Hesap yoksa kayıt ol
     try {
       const { data } = await api.post('/auth/register', { email, password, name: 'Kullanıcı' });
       await setToken(data.token);

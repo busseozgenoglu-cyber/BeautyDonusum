@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useLang } from '../../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
+import { COLORS, FONT, SPACING, RADIUS, SHADOWS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -71,7 +71,6 @@ export default function CameraScreen() {
   const handleProceed = () => {
     if (!image) return;
     setLoading(true);
-    // Büyük base64'ü URL param olarak DEĞİL, memory store üzerinden taşı
     pendingPhotoStore.photo = image;
     router.push({
       pathname: '/analysis/loading',
@@ -87,12 +86,12 @@ export default function CameraScreen() {
           onPress={() => router.back()}
           style={styles.backBtn}
         >
-          <Ionicons name="arrow-back" size={24} color={COLORS.text.primary} />
+          <Ionicons name="arrow-back" size={22} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>
           {category === 'cerrahi' ? t('surgical') : t('medicalAesthetic')}
         </Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <View style={styles.content}>
@@ -108,7 +107,7 @@ export default function CameraScreen() {
               style={styles.retakeBtn}
               onPress={() => setImage(null)}
             >
-              <Ionicons name="refresh" size={20} color={COLORS.text.primary} />
+              <Ionicons name="refresh" size={18} color="#FFFFFF" />
               <Text style={styles.retakeText}>Tekrar Seç</Text>
             </TouchableOpacity>
           </View>
@@ -119,7 +118,7 @@ export default function CameraScreen() {
               <View style={[styles.corner, styles.topRight]} />
               <View style={[styles.corner, styles.bottomLeft]} />
               <View style={[styles.corner, styles.bottomRight]} />
-              <Ionicons name="person-outline" size={64} color={COLORS.text.tertiary} />
+              <Ionicons name="person-outline" size={56} color={COLORS.text.tertiary} />
               <Text style={styles.placeholderText}>
                 Yüzünüzün net göründüğü bir fotoğraf seçin
               </Text>
@@ -136,12 +135,12 @@ export default function CameraScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#F3D088', '#D1A354']}
+                  colors={['#3B82F6', '#2563EB']}
                   style={styles.actionBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Ionicons name="camera" size={22} color="#000" />
+                  <Ionicons name="camera" size={22} color="#fff" />
                   <Text style={styles.actionBtnText}>{t('takePhoto')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -162,16 +161,16 @@ export default function CameraScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#F3D088', '#D1A354']}
+                colors={['#3B82F6', '#2563EB']}
                 style={styles.actionBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#000" />
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Ionicons name="scan" size={22} color="#000" />
+                    <Ionicons name="scan" size={22} color="#fff" />
                     <Text style={styles.actionBtnText}>{t('startAnalysis')}</Text>
                   </>
                 )}
@@ -191,18 +190,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
   },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#F1F5F9' },
   title: { ...FONT.h4, color: COLORS.text.primary },
   content: { flex: 1, paddingHorizontal: SPACING.lg },
-  previewContainer: { flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 20 },
-  preview: { flex: 1, borderRadius: RADIUS.lg },
+  previewContainer: { flex: 1, borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 20, ...SHADOWS.card },
+  preview: { flex: 1, borderRadius: RADIUS.xl },
   retakeBtn: {
     position: 'absolute', bottom: 16, alignSelf: 'center',
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 16,
+    backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 18,
     paddingVertical: 10, borderRadius: RADIUS.full,
   },
-  retakeText: { ...FONT.small, color: COLORS.text.primary },
+  retakeText: { ...FONT.small, color: '#FFFFFF', fontWeight: '600' },
   placeholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scanFrame: {
     width: 260, height: 340, justifyContent: 'center',
@@ -219,16 +218,17 @@ const styles = StyleSheet.create({
   },
   actions: { gap: 12, paddingBottom: 30 },
   actionBtn: {
-    borderRadius: RADIUS.md, paddingVertical: 16,
+    borderRadius: RADIUS.md, paddingVertical: 17,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 10,
+    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 5,
   },
-  actionBtnText: { ...FONT.body, fontWeight: '700', color: COLORS.text.inverse },
+  actionBtnText: { ...FONT.body, fontWeight: '700', color: '#FFFFFF' },
   secondaryBtn: {
     borderRadius: RADIUS.md, paddingVertical: 16,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 10,
-    borderWidth: 1, borderColor: COLORS.surface.glassBorder,
+    borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF',
   },
   secondaryBtnText: { ...FONT.body, color: COLORS.text.primary },
 });

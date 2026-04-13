@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
@@ -14,19 +14,17 @@ import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
 import { useAuth } from '../../src/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
 
-const { width: W } = Dimensions.get('window');
-
-function Ring({ index }: { index: number }) {
+function PulseRing({ index }: { index: number }) {
   const anim = useSharedValue(0);
-  const baseSize = 130 + index * 70;
-  const delay = index * 400;
+  const baseSize = 100 + index * 60;
+  const ringDelay = index * 350;
 
   useEffect(() => {
     anim.value = withDelay(
-      delay,
+      ringDelay,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 1800, easing: Easing.out(Easing.quad) }),
+          withTiming(1, { duration: 2000, easing: Easing.out(Easing.quad) }),
           withTiming(0, { duration: 0 }),
         ),
         -1
@@ -35,42 +33,23 @@ function Ring({ index }: { index: number }) {
   }, []);
 
   const style = useAnimatedStyle(() => ({
-    opacity: interpolate(anim.value, [0, 0.2, 1], [0, 0.5, 0]),
-    transform: [{ scale: interpolate(anim.value, [0, 1], [0.7, 1.1]) }],
+    opacity: interpolate(anim.value, [0, 0.2, 1], [0, 0.4, 0]),
+    transform: [{ scale: interpolate(anim.value, [0, 1], [0.8, 1.15]) }],
     width: baseSize,
     height: baseSize,
     borderRadius: baseSize / 2,
   }));
 
   return (
-    <Animated.View style={[styles.ring, style, { borderColor: `rgba(229,192,123,${0.7 - index * 0.18})` }]} />
-  );
-}
-
-function ScanLine() {
-  const pos = useSharedValue(-50);
-  useEffect(() => {
-    pos.value = withRepeat(
-      withSequence(
-        withTiming(50, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
-        withTiming(-50, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
-      ),
-      -1
-    );
-  }, []);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: pos.value }] }));
-  return (
-    <Animated.View style={[styles.scanLine, style]}>
-      <LinearGradient colors={['transparent', 'rgba(229,192,123,0.7)', 'transparent']} style={styles.scanLineGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
-    </Animated.View>
+    <Animated.View style={[styles.ring, style, { borderColor: `rgba(59,130,246,${0.5 - index * 0.12})` }]} />
   );
 }
 
 const STEPS = [
-  { icon: '🔍', label: 'Yüz taranıyor...' },
-  { icon: '📊', label: 'Metrikler hesaplanıyor...' },
-  { icon: '✨', label: 'AI öneriler üretiliyor...' },
-  { icon: '🎯', label: 'Sonuçlar hazırlanıyor...' },
+  { icon: 'scan-outline', label: 'Yüz taranıyor...' },
+  { icon: 'analytics-outline', label: 'Metrikler hesaplanıyor...' },
+  { icon: 'bulb-outline', label: 'Kişisel öneriler oluşturuluyor...' },
+  { icon: 'checkmark-circle-outline', label: 'Sonuçlar hazırlanıyor...' },
 ];
 
 export default function LoadingScreen() {
@@ -85,14 +64,13 @@ export default function LoadingScreen() {
     cancelled.current = false;
     const run = async () => {
       try {
-        // Token yoksa önce auth sağla
         const existingToken = await SecureStore.getItemAsync('auth_token');
         if (!existingToken) {
           await autoLogin();
         }
 
         const photoBase64 = pendingPhotoStore.photo ?? 'placeholder_photo_data';
-        setStep(0); await delay(800);
+        setStep(0); await delayMs(800);
         if (cancelled.current) return;
 
         setStep(1);
@@ -106,7 +84,7 @@ export default function LoadingScreen() {
         await api.post(`/analysis/${analysisData.analysis_id}/recommendations`);
         if (cancelled.current) return;
 
-        setStep(3); await delay(800);
+        setStep(3); await delayMs(800);
         if (cancelled.current) return;
 
         pendingPhotoStore.photo = null;
@@ -125,28 +103,24 @@ export default function LoadingScreen() {
 
   return (
     <View style={styles.root}>
-      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={8} />
-      <LinearGradient colors={['rgba(6,6,12,0.85)', 'rgba(10,10,20,0.9)', 'rgba(6,6,12,0.85)']} style={StyleSheet.absoluteFill} />
-      <View style={styles.ambientGlow} />
+      <LinearGradient colors={['#EEF2FF', '#FAFBFE', '#F0FDFA']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
 
       <SafeAreaView style={styles.container}>
-        {/* Rings + Face icon */}
         <View style={styles.ringsWrap}>
-          <Ring index={0} />
-          <Ring index={1} />
-          <Ring index={2} />
+          <PulseRing index={0} />
+          <PulseRing index={1} />
+          <PulseRing index={2} />
           <View style={styles.centerCircle}>
-            <LinearGradient colors={['rgba(229,192,123,0.15)', 'rgba(229,192,123,0.04)']} style={styles.centerGrad}>
-              <ScanLine />
-              <Text style={styles.faceIcon}>👤</Text>
+            <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.centerGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Text style={styles.faceIcon}>
+                <View><Text style={{ fontSize: 38, color: '#FFFFFF' }}>AI</Text></View>
+              </Text>
             </LinearGradient>
           </View>
         </View>
 
-        {/* Title */}
         <Text style={styles.title}>Analiz Ediliyor</Text>
 
-        {/* Steps */}
         <View style={styles.stepsWrap}>
           {STEPS.map((s, i) => (
             <View key={i} style={[styles.stepRow, i === step && styles.stepRowActive]}>
@@ -164,13 +138,11 @@ export default function LoadingScreen() {
           ))}
         </View>
 
-        {/* Progress bar */}
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
         <Text style={styles.progressPct}>{Math.round(progress)}%</Text>
 
-        {/* Error state */}
         {error ? (
           <View style={styles.errorWrap}>
             <Text style={styles.errorText}>{error}</Text>
@@ -184,64 +156,49 @@ export default function LoadingScreen() {
   );
 }
 
-function delay(ms: number) {
+function delayMs(ms: number) {
   return new Promise(r => setTimeout(r, ms));
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg.primary },
-  ambientGlow: {
-    position: 'absolute', width: 400, height: 400,
-    borderRadius: 200, backgroundColor: 'rgba(229,192,123,0.05)',
-    alignSelf: 'center', top: '20%',
-  },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-
-  // Rings
-  ringsWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 48, height: 280 },
-  ring: {
-    position: 'absolute', borderWidth: 1.5,
-  },
-  centerCircle: { width: 110, height: 110, borderRadius: 55, overflow: 'hidden' },
+  ringsWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 48, height: 260 },
+  ring: { position: 'absolute', borderWidth: 2 },
+  centerCircle: { width: 90, height: 90, borderRadius: 28, overflow: 'hidden', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 10 },
   centerGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  faceIcon: { fontSize: 48 },
-  scanLine: { position: 'absolute', width: '100%', height: 2 },
-  scanLineGrad: { flex: 1, height: 2 },
+  faceIcon: { fontSize: 38, color: '#FFFFFF', fontWeight: '900' },
 
-  // Text
-  title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 32, letterSpacing: -0.3 },
+  title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 32 },
 
-  // Steps
   stepsWrap: { width: '100%', marginBottom: 32, gap: 14 },
-  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 14, opacity: 0.4 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 14, opacity: 0.35 },
   stepRowActive: { opacity: 1 },
   stepDot: {
-    width: 28, height: 28, borderRadius: 14,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center', justifyContent: 'center',
+    width: 30, height: 30, borderRadius: 15,
+    borderWidth: 2, borderColor: '#E2E8F0',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF',
   },
   stepDotDone: { backgroundColor: COLORS.status.success, borderColor: COLORS.status.success },
-  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(229,192,123,0.1)' },
+  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: '#EEF2FF' },
   stepNum: { ...FONT.xs, color: COLORS.text.tertiary, fontWeight: '700' },
   stepCheck: { fontSize: 12, color: '#fff', fontWeight: '700' },
   stepLabel: { ...FONT.body, color: COLORS.text.tertiary },
   stepLabelActive: { color: COLORS.text.primary, fontWeight: '600' },
   stepLabelDone: { color: COLORS.status.success },
 
-  // Progress
   progressTrack: {
-    width: '100%', height: 3, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.07)', marginBottom: 8, overflow: 'hidden',
+    width: '100%', height: 4, borderRadius: 2,
+    backgroundColor: '#E2E8F0', marginBottom: 8, overflow: 'hidden',
   },
   progressFill: { height: '100%', backgroundColor: COLORS.brand.primary, borderRadius: 2 },
   progressPct: { ...FONT.xs, color: COLORS.text.tertiary },
 
-  // Error
   errorWrap: { alignItems: 'center', marginTop: 24, gap: 14 },
   errorText: { ...FONT.body, color: COLORS.status.error, textAlign: 'center' },
   backBtn: {
     borderRadius: RADIUS.md, paddingVertical: 12, paddingHorizontal: 32,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF',
   },
   backBtnText: { ...FONT.body, color: COLORS.text.primary },
 });

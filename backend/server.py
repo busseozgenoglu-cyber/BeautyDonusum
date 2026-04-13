@@ -30,7 +30,7 @@ mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 JWT_SECRET = os.environ.get("JWT_SECRET", "default_secret_change_in_production")
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@faceglowpro.app")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@estetikpusula.app")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
 # CORS: virgülle ayrılmış origin listesi. Wildcard + credentials birlikte çalışmaz.
@@ -41,7 +41,7 @@ ALLOWED_ORIGINS_RAW = os.environ.get(
 ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS_RAW.split(",") if o.strip()]
 
 JWT_ALGORITHM = "HS256"
-DB_NAME = os.environ.get("DB_NAME", "faceglow_db")
+DB_NAME = os.environ.get("DB_NAME", "estetik_pusula_db")
 
 client = AsyncIOMotorClient(mongo_url)
 db = client[DB_NAME]
@@ -742,11 +742,111 @@ async def get_face_shape_tips(shape: str):
         raise HTTPException(status_code=400, detail=f"Geçersiz yüz şekli. Geçerli değerler: {', '.join(FACE_SHAPES)}")
     return {"face_shape": shape, "tips": FACE_SHAPE_TIPS[shape]}
 
+# ==================== DAILY TIPS ====================
+
+DAILY_TIPS = [
+    {"id": "tip_1", "category": "Cilt Bakımı", "icon": "water-outline", "tip_tr": "Günde en az 2 litre su içmek cilt elastikiyetini artırır ve kırışıklıkları geciktirir.", "tip_en": "Drinking at least 2 liters of water daily improves skin elasticity and delays wrinkles."},
+    {"id": "tip_2", "category": "Koruma", "icon": "sunny-outline", "tip_tr": "SPF 50 güneş kremi kullanımı, erken yaşlanmanın %80'ini önleyebilir.", "tip_en": "Using SPF 50 sunscreen can prevent up to 80% of premature aging."},
+    {"id": "tip_3", "category": "Gece Bakımı", "icon": "moon-outline", "tip_tr": "Gece serumu uygulayarak cildinizin yenilenme sürecini destekleyin.", "tip_en": "Support your skin's renewal process by applying a night serum."},
+    {"id": "tip_4", "category": "Beslenme", "icon": "nutrition-outline", "tip_tr": "C vitamini içeren gıdalar kolajen üretimini artırarak cildi sıkılaştırır.", "tip_en": "Foods rich in vitamin C boost collagen production, tightening the skin."},
+    {"id": "tip_5", "category": "Yaşam Tarzı", "icon": "fitness-outline", "tip_tr": "Düzenli egzersiz kan dolaşımını artırarak cilde doğal bir parlaklık verir.", "tip_en": "Regular exercise increases blood circulation, giving skin a natural glow."},
+    {"id": "tip_6", "category": "Cilt Bakımı", "icon": "sparkles-outline", "tip_tr": "Haftada 1-2 kez peeling yaparak ölü hücreleri temizleyin.", "tip_en": "Exfoliate 1-2 times a week to remove dead skin cells."},
+    {"id": "tip_7", "category": "Beslenme", "icon": "leaf-outline", "tip_tr": "Omega-3 yağ asitleri cilt bariyerini güçlendirerek kuruluğu önler.", "tip_en": "Omega-3 fatty acids strengthen the skin barrier and prevent dryness."},
+    {"id": "tip_8", "category": "Koruma", "icon": "shield-outline", "tip_tr": "Mavi ışık filtresi olan nemlendiriciler ekran kaynaklı cilt hasarını azaltır.", "tip_en": "Moisturizers with blue light filters reduce screen-related skin damage."},
+    {"id": "tip_9", "category": "Gece Bakımı", "icon": "bed-outline", "tip_tr": "En az 7-8 saat uyumak, cildin gece boyunca yenilenmesi için önemlidir.", "tip_en": "Getting at least 7-8 hours of sleep is essential for overnight skin renewal."},
+    {"id": "tip_10", "category": "Yaşam Tarzı", "icon": "happy-outline", "tip_tr": "Stres yönetimi cildiniz için de kritik: meditasyon ve derin nefes deneyin.", "tip_en": "Stress management is critical for skin too: try meditation and deep breathing."},
+]
+
+@api_router.get("/daily-tips")
+async def get_daily_tips():
+    today = datetime.now(timezone.utc)
+    tip_index = today.timetuple().tm_yday % len(DAILY_TIPS)
+    return {"tip": DAILY_TIPS[tip_index], "all_tips": DAILY_TIPS}
+
+# ==================== BEAUTY ROUTINE ====================
+
+class RoutineEntry(BaseModel):
+    routine_type: str  # "morning" or "evening"
+    steps_completed: list[str]
+    notes: Optional[str] = None
+
+@api_router.post("/routine/log")
+async def log_routine(data: RoutineEntry, request: Request):
+    user = await get_current_user(request)
+    entry = {
+        "entry_id": str(uuid.uuid4()),
+        "user_id": user["user_id"],
+        "routine_type": data.routine_type,
+        "steps_completed": data.steps_completed,
+        "notes": data.notes,
+        "logged_at": datetime.now(timezone.utc).isoformat(),
+        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+    }
+    await db.routines.insert_one(entry)
+    return {"message": "Rutin kaydedildi", "entry": {k: v for k, v in entry.items() if k != "_id"}}
+
+@api_router.get("/routine/history")
+async def get_routine_history(request: Request):
+    user = await get_current_user(request)
+    entries = await db.routines.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("logged_at", -1).to_list(100)
+
+    dates_set = set(e.get("date", "") for e in entries)
+    streak = 0
+    check_date = datetime.now(timezone.utc).date()
+    while check_date.strftime("%Y-%m-%d") in dates_set:
+        streak += 1
+        check_date = check_date - timedelta(days=1)
+
+    return {"entries": entries, "streak_days": streak, "total_entries": len(entries)}
+
+# ==================== PROGRESS TRACKING ====================
+
+@api_router.get("/progress/summary")
+async def get_progress_summary(request: Request):
+    user = await get_current_user(request)
+    analyses = await db.analyses.find(
+        {"user_id": user["user_id"], "status": "completed"},
+        {"_id": 0, "full_photo": 0, "transformation_base64": 0}
+    ).sort("created_at", 1).to_list(50)
+
+    if len(analyses) < 1:
+        return {"has_data": False, "message": "Henüz analiz verisi yok"}
+
+    scores = []
+    for a in analyses:
+        recs = a.get("recommendations") or {}
+        score = recs.get("overall_score")
+        if score is None:
+            metrics = a.get("metrics", {})
+            numeric_vals = [v for v in metrics.values() if isinstance(v, (int, float))]
+            score = round(sum(numeric_vals) / len(numeric_vals) * 10, 1) if numeric_vals else None
+        if score is not None:
+            scores.append({"score": score, "date": a.get("created_at", ""), "category": a.get("category", "")})
+
+    trend = "stable"
+    if len(scores) >= 2:
+        if scores[-1]["score"] > scores[0]["score"]:
+            trend = "improving"
+        elif scores[-1]["score"] < scores[0]["score"]:
+            trend = "declining"
+
+    return {
+        "has_data": True,
+        "total_analyses": len(analyses),
+        "scores": scores,
+        "latest_score": scores[-1]["score"] if scores else None,
+        "first_score": scores[0]["score"] if scores else None,
+        "trend": trend,
+    }
+
 # ==================== HEALTH ====================
 
 @api_router.get("/health")
 async def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "app": "estetik-pusula", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # ==================== ROUTER ====================
 

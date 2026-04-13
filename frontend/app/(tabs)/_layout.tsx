@@ -8,8 +8,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.bar,
-        tabBarActiveTintColor: '#E5C07B',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.3)',
+        tabBarActiveTintColor: '#3B82F6',
+        tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: styles.label,
         tabBarBackground: () => (
           <View style={styles.barBg} />
@@ -19,29 +19,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Ana Sayfa',
-          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+          title: 'Başlangıç',
+          tabBarIcon: ({ color, size }) => <Ionicons name="compass" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
           title: 'Keşfet',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'Geçmiş',
-          tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} />,
+          title: 'Analizlerim',
+          tabBarIcon: ({ color, size }) => <Ionicons name="layers-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          title: 'Hesabım',
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-circle-outline" size={size} color={color} />,
         }}
       />
     </Tabs>
@@ -51,7 +51,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.15)',
+    borderTopColor: '#E2E8F0',
     borderTopWidth: 1,
     height: 85,
     paddingBottom: 25,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   barBg: {
     flex: 1,
-    backgroundColor: '#0E0B06',
+    backgroundColor: '#FFFFFF',
   },
-  label: { fontSize: 11, fontWeight: '600' },
+  label: { fontSize: 10, fontWeight: '600', letterSpacing: 0.2 },
 });

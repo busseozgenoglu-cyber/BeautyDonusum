@@ -27,7 +27,7 @@ export async function purchasePremium(): Promise<boolean> {
   const pkg = offerings.current?.availablePackages[0];
   if (!pkg) {
     throw new Error(
-      'Satın alma seçeneği bulunamadı. Lütfen daha sonra tekrar deneyin.'
+      'Satın alma seçeneği bulunamadı. Lütfen tekrar deneyin.'
     );
   }
   const { customerInfo } = await Purchases.purchasePackage(pkg);
