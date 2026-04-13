@@ -2,8 +2,8 @@ type LangKey = 'tr' | 'en';
 
 const translations: Record<LangKey, Record<string, string>> = {
   tr: {
-    appName: 'FaceGlow Pro',
-    tagline: 'AI Destekli Güzellik Analizi',
+    appName: 'Ayna Estetik Asistanı',
+    tagline: 'Kişisel Estetik Yol Haritası ve AI Analizi',
     welcome: 'Hoş Geldiniz',
     login: 'Giriş Yap',
     register: 'Kayıt Ol',
@@ -67,8 +67,8 @@ const translations: Record<LangKey, Record<string, string>> = {
     totalAnalyses: 'Toplam Analiz',
   },
   en: {
-    appName: 'FaceGlow Pro',
-    tagline: 'AI-Powered Beauty Analysis',
+    appName: 'Ayna Aesthetic Assistant',
+    tagline: 'Personal Aesthetic Journey and AI Insights',
     welcome: 'Welcome',
     login: 'Login',
     register: 'Register',

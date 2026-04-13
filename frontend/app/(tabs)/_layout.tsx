@@ -31,6 +31,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="journey"
+        options={{
+          title: 'Journey',
+          tabBarIcon: ({ color, size }) => <Ionicons name="pulse-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'Geçmiş',
