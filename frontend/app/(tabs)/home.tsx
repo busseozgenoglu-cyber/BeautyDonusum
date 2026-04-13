@@ -1,320 +1,366 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated as RNAnimated, Image } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/context/AuthContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
-
-const { width: W } = Dimensions.get('window');
-
-// Animated orbiting dots around face mesh
-function OrbitDot({ angle, radius, size, color }: { angle: number; radius: number; size: number; color: string }) {
-  const anim = useRef(new RNAnimated.Value(angle)).current;
-  useEffect(() => {
-    RNAnimated.loop(
-      RNAnimated.timing(anim, { toValue: angle + 360, duration: 4000 + radius * 10, useNativeDriver: true })
-    ).start();
-  }, []);
-  const x = anim.interpolate({ inputRange: [angle, angle + 360], outputRange: [0, 0] });
-  return (
-    <RNAnimated.View style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color, top: 90 - radius * Math.sin((angle * Math.PI) / 180), left: 90 - radius * Math.cos((angle * Math.PI) / 180) }]} />
-  );
-}
-
-function FaceMesh() {
-  const pulse = useRef(new RNAnimated.Value(1)).current;
-  const rotate = useRef(new RNAnimated.Value(0)).current;
-
-  useEffect(() => {
-    RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulse, { toValue: 1.06, duration: 1800, useNativeDriver: true }),
-        RNAnimated.timing(pulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
-      ])
-    ).start();
-    RNAnimated.loop(
-      RNAnimated.timing(rotate, { toValue: 1, duration: 12000, useNativeDriver: true })
-    ).start();
-  }, []);
-
-  const spin = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-
-  return (
-    <View style={fmS.wrap}>
-      {/* Outer ring */}
-      <RNAnimated.View style={[fmS.ring, fmS.ring1, { transform: [{ rotate: spin }] }]}>
-        {[0, 60, 120, 180, 240, 300].map(a => (
-          <View key={a} style={[fmS.ringDot, {
-            top: 75 - 78 * Math.sin((a * Math.PI) / 180) - 4,
-            left: 75 - 78 * Math.cos((a * Math.PI) / 180) - 4,
-          }]} />
-        ))}
-      </RNAnimated.View>
-      {/* Middle ring */}
-      <RNAnimated.View style={[fmS.ring, fmS.ring2, { transform: [{ rotate: spin }, { scaleX: -1 }] }]}>
-        {[30, 90, 150, 210, 270, 330].map(a => (
-          <View key={a} style={[fmS.ringDot2, {
-            top: 55 - 55 * Math.sin((a * Math.PI) / 180) - 3,
-            left: 55 - 55 * Math.cos((a * Math.PI) / 180) - 3,
-          }]} />
-        ))}
-      </RNAnimated.View>
-      {/* Core */}
-      <RNAnimated.View style={[fmS.core, { transform: [{ scale: pulse }] }]}>
-        <LinearGradient colors={['#7C3AED', '#4F46E5', '#1D4ED8']} style={fmS.coreGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name="scan-outline" size={36} color="rgba(255,255,255,0.9)" />
-        </LinearGradient>
-      </RNAnimated.View>
-      {/* Corner brackets */}
-      <View style={[fmS.bracket, fmS.bTL]} />
-      <View style={[fmS.bracket, fmS.bTR]} />
-      <View style={[fmS.bracket, fmS.bBL]} />
-      <View style={[fmS.bracket, fmS.bBR]} />
-    </View>
-  );
-}
-
-const fmS = StyleSheet.create({
-  wrap: { width: 180, height: 180, alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', borderRadius: 150 },
-  ring1: { width: 160, height: 160, borderWidth: 1, borderColor: 'rgba(124,58,237,0.35)', borderStyle: 'dashed' },
-  ring2: { width: 120, height: 120, borderWidth: 1, borderColor: 'rgba(99,102,241,0.4)', borderStyle: 'dashed' },
-  ringDot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#7C3AED' },
-  ringDot2: { position: 'absolute', width: 6, height: 6, borderRadius: 3, backgroundColor: '#818CF8' },
-  core: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 20 },
-  coreGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bracket: { position: 'absolute', width: 20, height: 20, borderColor: '#E5C07B' },
-  bTL: { top: 10, left: 10, borderTopWidth: 2.5, borderLeftWidth: 2.5, borderTopLeftRadius: 6 },
-  bTR: { top: 10, right: 10, borderTopWidth: 2.5, borderRightWidth: 2.5, borderTopRightRadius: 6 },
-  bBL: { bottom: 10, left: 10, borderBottomWidth: 2.5, borderLeftWidth: 2.5, borderBottomLeftRadius: 6 },
-  bBR: { bottom: 10, right: 10, borderBottomWidth: 2.5, borderRightWidth: 2.5, borderBottomRightRadius: 6 },
-});
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { useAuth } from '../../src/context/AuthContext';
+import { COLORS, FONT, RADIUS, SPACING } from '../../src/utils/theme';
+import { JOURNEY_MODES, STUDIO_PILLARS } from '../../src/data/editorial';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [selected, setSelected] = useState<'cerrahi' | 'medikal' | null>(null);
+  const [selected, setSelected] = useState<'cerrahi' | 'medikal'>('cerrahi');
 
-  const handleStart = () => {
-    if (!selected) return;
-    router.push({ pathname: '/analysis/camera', params: { category: selected } });
-  };
+  const currentMode = useMemo(
+    () => JOURNEY_MODES.find((mode) => mode.key === selected) || JOURNEY_MODES[0],
+    [selected]
+  );
 
   return (
-    <View style={s.root}>
-      {/* Unique purple-to-black gradient background */}
+    <View style={styles.root}>
       <LinearGradient
-        colors={['#0F0A1E', '#0A0A14', '#06060C']}
+        colors={['#08111F', '#0A1830', '#122038']}
         style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       />
-      {/* Purple bloom top */}
-      <View style={s.bloomPurple} />
-      {/* Indigo bloom bottom-right */}
-      <View style={s.bloomIndigo} />
-      {/* Gold accent top-right */}
-      <View style={s.bloomGold} />
+      <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
 
-      <SafeAreaView style={s.safe}>
-        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-
-          {/* Header */}
-          <Animated.View entering={FadeInDown.duration(500)} style={s.header}>
-            <View>
-              <Text style={s.hi}>Merhaba 👋</Text>
-              <Text style={s.name}>{user?.name || 'Kullanıcı'}</Text>
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInDown.duration(500)} style={styles.header}>
+            <View style={styles.headerTextWrap}>
+              <Text style={styles.eyebrow}>Ayna Atlas</Text>
+              <Text style={styles.title}>Merhaba, {user?.name || 'katilimci'}.</Text>
+              <Text style={styles.subtitle}>
+                Bugun tek bir skordan fazlasini hazirliyoruz: danisma sorulari, toparlanma zamani
+                ve karar notlari tek ekranda.
+              </Text>
             </View>
-            <Animated.View entering={ZoomIn.delay(300)}>
-              <LinearGradient
-                colors={user?.subscription === 'premium'
-                  ? ['rgba(229,192,123,0.22)', 'rgba(229,192,123,0.08)']
-                  : ['rgba(124,58,237,0.15)', 'rgba(124,58,237,0.05)']}
-                style={s.badge}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name={user?.subscription === 'premium' ? 'diamond' : 'sparkles-outline'} size={13} color={user?.subscription === 'premium' ? '#E5C07B' : '#818CF8'} />
-                <Text style={[s.badgeTxt, user?.subscription === 'premium' && s.badgeTxtPremium]}>
-                  {user?.subscription === 'premium' ? 'Premium' : 'Ücretsiz'}
-                </Text>
-              </LinearGradient>
-            </Animated.View>
+            <View style={styles.badge}>
+              <Ionicons
+                name={user?.subscription === 'premium' ? 'sparkles' : 'grid-outline'}
+                size={14}
+                color={user?.subscription === 'premium' ? COLORS.brand.secondary : COLORS.brand.primary}
+              />
+              <Text style={styles.badgeText}>
+                {user?.subscription === 'premium' ? 'Studio+' : 'Explorer'}
+              </Text>
+            </View>
           </Animated.View>
 
-          {/* Hero — Face mesh scanner */}
-          <Animated.View entering={FadeInDown.delay(80).duration(600)} style={s.heroWrap}>
-            <Image source={require('../../assets/images/hero-bg.png')} style={s.heroBgImage} blurRadius={2} />
-            <LinearGradient
-              colors={['rgba(15,10,30,0.3)', 'rgba(15,10,30,0.6)', 'rgba(6,6,12,0.95)']}
-              style={s.heroGradient}
-              start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-            />
-            <FaceMesh />
-            <View style={s.heroText}>
-              <Text style={s.heroTitle}>AI Yüz Analizi</Text>
-              <Text style={s.heroSub}>Estetik potansiyelini keşfet</Text>
+          <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.heroCard}>
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroSignal}>
+                <LinearGradient colors={COLORS.gradient.lagoon} style={styles.heroSignalDot} />
+                <Text style={styles.heroSignalText}>Canli planlama panosu</Text>
+              </View>
+              <View style={styles.heroStat}>
+                <Text style={styles.heroStatValue}>{user?.analyses_count || 0}</Text>
+                <Text style={styles.heroStatLabel}>olusturulan dosya</Text>
+              </View>
             </View>
-            <View style={s.heroBadgeRow}>
-              {['10+ Metrik', 'Yüz Şekli', 'TL Fiyatlar'].map((b, i) => (
-                <View key={i} style={s.heroBadge}>
-                  <View style={s.heroBadgeDot} />
-                  <Text style={s.heroBadgeTxt}>{b}</Text>
+
+            <View style={styles.heroBody}>
+              <View style={styles.heroIconWrap}>
+                <LinearGradient colors={COLORS.gradient.aurora} style={styles.heroIcon}>
+                  <Ionicons name="scan-outline" size={32} color={COLORS.text.inverse} />
+                </LinearGradient>
+              </View>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroTitle}>Sablon analiz degil, karar destek dosyasi</Text>
+                <Text style={styles.heroDescription}>
+                  Her tarama; oncelikli bolgeler, klinikte sorulacak sorular ve surec planlamasina
+                  donusen ozetler uretir.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.heroChips}>
+              {['Danisma sorulari', 'Butce bandi', 'Toparlanma penceresi'].map((chip) => (
+                <View key={chip} style={styles.heroChip}>
+                  <Text style={styles.heroChipText}>{chip}</Text>
                 </View>
               ))}
             </View>
           </Animated.View>
 
-          {/* Section label */}
-          <Animated.View entering={FadeInDown.delay(200).duration(400)} style={s.secRow}>
-            <View style={s.secLine} />
-            <Text style={s.secLabel}>ANALİZ TÜRÜ</Text>
-            <View style={s.secLine} />
+          <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.sectionHeader}>
+            <Text style={styles.sectionEyebrow}>Rota secimi</Text>
+            <Text style={styles.sectionTitle}>Hangi akisla ilerlemek istiyorsun?</Text>
           </Animated.View>
 
-          {/* Surgical card */}
-          <Animated.View entering={FadeInDown.delay(260).duration(500)}>
-            <TouchableOpacity activeOpacity={0.88} onPress={() => setSelected('cerrahi')}>
-              <View style={[s.card, selected === 'cerrahi' && s.cardSelGold]}>
-                {selected === 'cerrahi' && (
-                  <LinearGradient colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.04)']} style={StyleSheet.absoluteFill} borderRadius={20} />
-                )}
-                <LinearGradient colors={['rgba(229,192,123,0.2)', 'rgba(229,192,123,0.06)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="cut-outline" size={26} color="#E5C07B" />
-                </LinearGradient>
-                <View style={s.cardBody}>
-                  <View style={s.cardTitleRow}>
-                    <Text style={s.cardTitle}>Cerrahi Analiz</Text>
-                    {selected === 'cerrahi' && (
-                      <View style={s.checkGold}><Ionicons name="checkmark" size={12} color="#000" /></View>
+          {JOURNEY_MODES.map((mode, index) => {
+            const active = selected === mode.key;
+            return (
+              <Animated.View key={mode.key} entering={FadeInDown.delay(220 + index * 60).duration(450)}>
+                <TouchableOpacity onPress={() => setSelected(mode.key)} activeOpacity={0.9}>
+                  <View style={[styles.modeCard, active && styles.modeCardActive]}>
+                    {active && (
+                      <LinearGradient
+                        colors={['rgba(70,198,255,0.16)', 'rgba(107,227,192,0.05)']}
+                        style={StyleSheet.absoluteFill}
+                      />
                     )}
+                    <LinearGradient colors={mode.accent} style={styles.modeIconWrap}>
+                      <Ionicons name={mode.icon as any} size={24} color={COLORS.text.inverse} />
+                    </LinearGradient>
+
+                    <View style={styles.modeBody}>
+                      <Text style={styles.modeEyebrow}>{mode.eyebrow}</Text>
+                      <View style={styles.modeTitleRow}>
+                        <Text style={styles.modeTitle}>{mode.title}</Text>
+                        {active && (
+                          <View style={styles.modeCheck}>
+                            <Ionicons name="checkmark" size={12} color={COLORS.text.inverse} />
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.modeDescription}>{mode.description}</Text>
+
+                      <View style={styles.modeOutcomeRow}>
+                        {mode.outcomes.map((item) => (
+                          <View key={item} style={styles.modeOutcome}>
+                            <Text style={styles.modeOutcomeText}>{item}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
                   </View>
-                  <Text style={s.cardDesc}>Rinoplasti, çene, göz kapağı ve daha fazlası</Text>
-                  <View style={s.tags}>
-                    {['Rinoplasti', 'Mentoplasti', 'Blefaroplasti'].map(t => (
-                      <View key={t} style={s.tagGold}><Text style={s.tagTxtGold}>{t}</Text></View>
-                    ))}
-                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
+
+          <Animated.View entering={FadeInDown.delay(360).duration(500)} style={styles.planCard}>
+            <Text style={styles.planEyebrow}>Secilen rota</Text>
+            <Text style={styles.planTitle}>{currentMode.title}</Text>
+            <Text style={styles.planDescription}>{currentMode.description}</Text>
+
+            <View style={styles.planList}>
+              {currentMode.outcomes.map((item, index) => (
+                <View key={item} style={styles.planListRow}>
+                  <Text style={styles.planStep}>{String(index + 1).padStart(2, '0')}</Text>
+                  <Text style={styles.planListText}>{item}</Text>
                 </View>
-              </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(440).duration(500)} style={styles.ctaWrap}>
+            <TouchableOpacity
+              testID="start-analysis-btn"
+              onPress={() => router.push({ pathname: '/analysis/camera', params: { category: selected } })}
+              activeOpacity={0.88}
+            >
+              <LinearGradient colors={currentMode.accent} style={styles.ctaButton}>
+                <Ionicons name="arrow-forward-circle-outline" size={20} color={COLORS.text.inverse} />
+                <Text style={styles.ctaText}>Bu rota ile analiz dosyasi olustur</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Medical card */}
-          <Animated.View entering={FadeInDown.delay(320).duration(500)}>
-            <TouchableOpacity activeOpacity={0.88} onPress={() => setSelected('medikal')}>
-              <View style={[s.card, selected === 'medikal' && s.cardSelPurple]}>
-                {selected === 'medikal' && (
-                  <LinearGradient colors={['rgba(124,58,237,0.12)', 'rgba(124,58,237,0.04)']} style={StyleSheet.absoluteFill} borderRadius={20} />
-                )}
-                <LinearGradient colors={['rgba(124,58,237,0.22)', 'rgba(99,102,241,0.08)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="sparkles-outline" size={26} color="#818CF8" />
-                </LinearGradient>
-                <View style={s.cardBody}>
-                  <View style={s.cardTitleRow}>
-                    <Text style={s.cardTitle}>Medikal Estetik</Text>
-                    {selected === 'medikal' && (
-                      <View style={s.checkPurple}><Ionicons name="checkmark" size={12} color="#fff" /></View>
-                    )}
-                  </View>
-                  <Text style={s.cardDesc}>Ameliyatsız botoks, dolgu ve lazer tedavileri</Text>
-                  <View style={s.tags}>
-                    {['Botoks', 'Dolgu', 'Lazer'].map(t => (
-                      <View key={t} style={s.tagPurple}><Text style={s.tagTxtPurple}>{t}</Text></View>
-                    ))}
-                  </View>
+          <Animated.View entering={FadeIn.delay(520)} style={styles.sectionHeader}>
+            <Text style={styles.sectionEyebrow}>Fark yaratan kisim</Text>
+            <Text style={styles.sectionTitle}>Tarama sonrasinda neler eklenir?</Text>
+          </Animated.View>
+
+          <View style={styles.pillarsGrid}>
+            {STUDIO_PILLARS.map((pillar, index) => (
+              <Animated.View
+                key={pillar.title}
+                entering={FadeInDown.delay(560 + index * 70).duration(400)}
+                style={styles.pillarCard}
+              >
+                <View style={styles.pillarIcon}>
+                  <Ionicons name={pillar.icon as any} size={18} color={COLORS.brand.primary} />
                 </View>
-              </View>
-            </TouchableOpacity>
+                <Text style={styles.pillarTitle}>{pillar.title}</Text>
+                <Text style={styles.pillarDescription}>{pillar.description}</Text>
+              </Animated.View>
+            ))}
+          </View>
+
+          <Animated.View entering={FadeIn.delay(760)} style={styles.disclaimer}>
+            <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.brand.primary} />
+            <Text style={styles.disclaimerText}>
+              Ayna Atlas tibbi tani koymaz; uzman gorusmesine hazirlik icin yapilandirilmis bir
+              karar destek alanidir.
+            </Text>
           </Animated.View>
-
-          {/* Start button */}
-          {selected ? (
-            <Animated.View entering={FadeIn.duration(350)} style={s.startWrap}>
-              <TouchableOpacity testID="start-analysis-btn" onPress={handleStart} activeOpacity={0.85}>
-                <LinearGradient
-                  colors={selected === 'cerrahi' ? ['#F5E0A0', '#E5C07B', '#C9963A'] : ['#A78BFA', '#7C3AED', '#4F46E5']}
-                  style={s.startBtn}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                >
-                  <Ionicons name="scan-outline" size={22} color="#fff" />
-                  <Text style={s.startTxt}>Analizi Başlat</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#fff" />
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
-          ) : (
-            <Animated.View entering={FadeInDown.delay(400)} style={s.hint}>
-              <Ionicons name="finger-print-outline" size={18} color="rgba(129,140,248,0.5)" />
-              <Text style={s.hintTxt}>Analiz türü seçin</Text>
-            </Animated.View>
-          )}
-
-          {/* Disclaimer */}
-          <Animated.View entering={FadeInDown.delay(480)} style={s.disc}>
-            <Ionicons name="shield-checkmark-outline" size={13} color="rgba(129,140,248,0.5)" />
-            <Text style={s.discTxt}>Bu uygulama tıbbi tavsiye niteliği taşımaz. Bir estetik uzmanına danışmanız önerilir.</Text>
-          </Animated.View>
-
         </ScrollView>
       </SafeAreaView>
     </View>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#06060C' },
-  bloomPurple: { position: 'absolute', top: -100, left: -80, width: 350, height: 350, borderRadius: 175, backgroundColor: '#7C3AED', opacity: 0.13 },
-  bloomIndigo: { position: 'absolute', bottom: 40, right: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: '#4F46E5', opacity: 0.10 },
-  bloomGold: { position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: '#E5C07B', opacity: 0.07 },
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bg.primary },
+  glowTop: {
+    position: 'absolute',
+    top: -80,
+    right: -50,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(70,198,255,0.16)',
+  },
+  glowBottom: {
+    position: 'absolute',
+    bottom: 20,
+    left: -80,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(255,176,120,0.14)',
+  },
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
-
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 },
-  hi: { fontSize: 13, color: 'rgba(129,140,248,0.7)', marginBottom: 2 },
-  name: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)' },
-  badgeTxt: { fontSize: 12, fontWeight: '700', color: '#818CF8' },
-  badgeTxtPremium: { color: '#E5C07B' },
-
-  heroWrap: { alignItems: 'center', paddingVertical: 24, marginBottom: 24, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
-  heroBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
-  heroGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  heroText: { alignItems: 'center', marginTop: 16, marginBottom: 16 },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  heroSub: { fontSize: 13, color: 'rgba(129,140,248,0.8)', marginTop: 4 },
-  heroBadgeRow: { flexDirection: 'row', gap: 10 },
-  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(124,58,237,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)' },
-  heroBadgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#818CF8' },
-  heroBadgeTxt: { fontSize: 11, color: '#818CF8', fontWeight: '600' },
-
-  secRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  secLabel: { fontSize: 10, fontWeight: '700', color: 'rgba(129,140,248,0.5)', letterSpacing: 2 },
-  secLine: { flex: 1, height: 1, backgroundColor: 'rgba(124,58,237,0.15)' },
-
-  card: { borderRadius: 20, padding: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.03)', overflow: 'hidden' },
-  cardSelGold: { borderColor: 'rgba(229,192,123,0.45)' },
-  cardSelPurple: { borderColor: 'rgba(124,58,237,0.5)' },
-  iconBox: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 16 },
-  cardBody: { flex: 1 },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  checkGold: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#E5C07B', alignItems: 'center', justifyContent: 'center' },
-  checkPurple: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
-  cardDesc: { fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10, lineHeight: 17 },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tagGold: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(229,192,123,0.12)', borderWidth: 1, borderColor: 'rgba(229,192,123,0.25)' },
-  tagTxtGold: { fontSize: 10, fontWeight: '600', color: '#E5C07B' },
-  tagPurple: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(124,58,237,0.15)', borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
-  tagTxtPurple: { fontSize: 10, fontWeight: '600', color: '#818CF8' },
-
-  startWrap: { marginTop: 8, marginBottom: 6 },
-  startBtn: { borderRadius: 18, paddingVertical: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  startTxt: { fontSize: 17, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2 },
-  hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10, paddingVertical: 18, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(124,58,237,0.15)', borderStyle: 'dashed' },
-  hintTxt: { fontSize: 14, color: 'rgba(129,140,248,0.5)' },
-
-  disc: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 24, backgroundColor: 'rgba(124,58,237,0.05)', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(124,58,237,0.12)' },
-  discTxt: { fontSize: 11, color: 'rgba(129,140,248,0.5)', flex: 1, lineHeight: 17 },
+  scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 44 },
+  header: { marginBottom: 24 },
+  headerTextWrap: { marginBottom: 16 },
+  eyebrow: { ...FONT.small, color: COLORS.brand.primary, marginBottom: 6, fontWeight: '700' },
+  title: { ...FONT.h1, color: COLORS.text.primary, lineHeight: 42 },
+  subtitle: { ...FONT.small, color: COLORS.text.secondary, marginTop: 10, lineHeight: 22 },
+  badge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(16,27,50,0.92)',
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+  },
+  badgeText: { ...FONT.xs, color: COLORS.text.primary, fontWeight: '700' },
+  heroCard: {
+    backgroundColor: 'rgba(16,27,50,0.9)',
+    borderRadius: 28,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+    marginBottom: 24,
+  },
+  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  heroSignal: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  heroSignalDot: { width: 10, height: 10, borderRadius: 5 },
+  heroSignalText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '700' },
+  heroStat: { alignItems: 'flex-end' },
+  heroStatValue: { ...FONT.h3, color: COLORS.brand.secondary },
+  heroStatLabel: { ...FONT.xs, color: COLORS.text.tertiary },
+  heroBody: { flexDirection: 'row', gap: 16, alignItems: 'center', marginBottom: 18 },
+  heroIconWrap: { padding: 2, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.06)' },
+  heroIcon: { width: 64, height: 64, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  heroCopy: { flex: 1 },
+  heroTitle: { ...FONT.h3, color: COLORS.text.primary, marginBottom: 8 },
+  heroDescription: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 21 },
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  heroChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  heroChipText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '600' },
+  sectionHeader: { marginBottom: 14 },
+  sectionEyebrow: { ...FONT.xs, color: COLORS.brand.primary, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 },
+  sectionTitle: { ...FONT.h3, color: COLORS.text.primary },
+  modeCard: {
+    flexDirection: 'row',
+    gap: 14,
+    padding: 18,
+    borderRadius: 22,
+    backgroundColor: 'rgba(16,27,50,0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  modeCardActive: { borderColor: 'rgba(70,198,255,0.38)' },
+  modeIconWrap: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  modeBody: { flex: 1 },
+  modeEyebrow: { ...FONT.xs, color: COLORS.brand.secondary, marginBottom: 6, fontWeight: '700' },
+  modeTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  modeTitle: { ...FONT.h4, color: COLORS.text.primary, flex: 1 },
+  modeCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeDescription: { ...FONT.small, color: COLORS.text.secondary, marginTop: 8, lineHeight: 20 },
+  modeOutcomeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  modeOutcome: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  modeOutcomeText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '600' },
+  planCard: {
+    marginTop: 6,
+    marginBottom: 18,
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: 'rgba(11,20,36,0.95)',
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+  },
+  planEyebrow: { ...FONT.xs, color: COLORS.brand.secondary, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 },
+  planTitle: { ...FONT.h3, color: COLORS.text.primary, marginBottom: 8 },
+  planDescription: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 21, marginBottom: 14 },
+  planList: { gap: 12 },
+  planListRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  planStep: { width: 28, ...FONT.small, color: COLORS.brand.primary, fontWeight: '800' },
+  planListText: { ...FONT.small, color: COLORS.text.secondary, flex: 1, lineHeight: 20 },
+  ctaWrap: { marginBottom: 24 },
+  ctaButton: {
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  ctaText: { ...FONT.body, color: COLORS.text.inverse, fontWeight: '800' },
+  pillarsGrid: { gap: 12, marginBottom: 26 },
+  pillarCard: {
+    backgroundColor: 'rgba(16,27,50,0.88)',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  pillarIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(107,227,192,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  pillarTitle: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 6 },
+  pillarDescription: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20 },
+  disclaimer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  disclaimerText: { ...FONT.xs, color: COLORS.text.tertiary, flex: 1, lineHeight: 18 },
 });

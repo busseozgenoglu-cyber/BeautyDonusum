@@ -1,28 +1,47 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../src/context/AuthContext';
-import { useLang } from '../../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../src/context/AuthContext';
+import { useLang } from '../../src/context/LanguageContext';
+import { COLORS, FONT, RADIUS, SPACING } from '../../src/utils/theme';
 import { purchasePremium, restorePurchases } from '../../src/utils/purchases';
 import api from '../../src/utils/api';
 
+const STUDIO_PLUS_FEATURES = [
+  'Sinirsiz planlama dosyasi',
+  'Gorsel senaryo olusturma',
+  'Daha kapsamli danisma sorulari',
+];
+
 export default function ProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
-  const { t, lang, setLang } = useLang();
+  const { lang, setLang } = useLang();
   const router = useRouter();
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert(t('logout'), 'Çıkış yapmak istediğinizden emin misiniz?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert('Cikis Yap', 'Bu cihazdaki oturumu kapatmak istiyor musun?', [
+      { text: 'Iptal', style: 'cancel' },
       {
-        text: t('logout'), style: 'destructive',
-        onPress: async () => { await logout(); router.replace('/auth'); },
+        text: 'Cik',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/auth');
+        },
       },
     ]);
   };
@@ -34,11 +53,11 @@ export default function ProfileScreen() {
       if (isPremium) {
         await api.post('/subscription/activate', { plan: 'premium' });
         await refreshUser();
-        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi.');
+        Alert.alert('Studio+ aktif', 'Planlama araclarinin tamamini kullanmaya baslayabilirsin.');
       }
-    } catch (e: any) {
-      if (e?.userCancelled) return;
-      Alert.alert('Hata', e?.message || 'Satın alma tamamlanamadı. Lütfen tekrar deneyin.');
+    } catch (error: any) {
+      if (error?.userCancelled) return;
+      Alert.alert('Islem tamamlanamadi', error?.message || 'Lutfen daha sonra tekrar dene.');
     } finally {
       setPurchasing(false);
     }
@@ -51,186 +70,254 @@ export default function ProfileScreen() {
       if (isPremium) {
         await api.post('/subscription/activate', { plan: 'premium' });
         await refreshUser();
-        Alert.alert('Başarılı', 'Satın alımlarınız geri yüklendi.');
+        Alert.alert('Basarili', 'Studio+ satin alimlari geri yuklendi.');
       } else {
-        Alert.alert('Bilgi', 'Aktif premium abonelik bulunamadı.');
+        Alert.alert('Bilgi', 'Bu Apple hesabi icin aktif Studio+ bulunamadi.');
       }
     } catch {
-      Alert.alert('Hata', 'Geri yükleme başarısız. Lütfen tekrar deneyin.');
+      Alert.alert('Geri yukleme basarisiz', 'Lutfen biraz sonra tekrar dene.');
     } finally {
       setRestoring(false);
     }
   };
 
-  const toggleLang = () => setLang(lang === 'tr' ? 'en' : 'tr');
-
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>{t('profile')}</Text>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={['#08111F', '#0D1A30', '#15253F']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
 
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </Text>
-          </View>
-          <Text style={styles.profileName}>{user?.name}</Text>
-          <Text style={styles.profileEmail}>{user?.email}</Text>
-          <View style={[styles.subBadge, user?.subscription === 'premium' && styles.subBadgePremium]}>
-            <Ionicons
-              name={user?.subscription === 'premium' ? 'diamond' : 'person'}
-              size={14}
-              color={user?.subscription === 'premium' ? COLORS.brand.primary : COLORS.text.secondary}
-            />
-            <Text style={[styles.subText, user?.subscription === 'premium' && styles.subTextPremium]}>
-              {user?.subscription === 'premium' ? t('premium') : t('free')}
-            </Text>
-          </View>
-        </View>
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <Text style={styles.eyebrow}>Hesap merkezi</Text>
+          <Text style={styles.screenTitle}>Ayna Atlas hesabini yonet.</Text>
+          <Text style={styles.screenSubtitle}>
+            Dil tercihin, abonelik durumun ve yasal sayfalar burada tek yerde.
+          </Text>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.analyses_count || 0}</Text>
-            <Text style={styles.statLabel}>{t('totalAnalyses')}</Text>
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || 'A'}</Text>
+            </View>
+            <View style={styles.profileMeta}>
+              <Text style={styles.profileName}>{user?.name || 'Ayna Atlas kullanicisi'}</Text>
+              <Text style={styles.profileEmail}>{user?.email}</Text>
+            </View>
+            <View
+              style={[
+                styles.planPill,
+                { backgroundColor: user?.subscription === 'premium' ? 'rgba(255,176,120,0.16)' : 'rgba(107,227,192,0.16)' },
+              ]}
+            >
+              <Text style={[styles.planPillText, { color: user?.subscription === 'premium' ? COLORS.brand.secondary : COLORS.brand.primary }]}>
+                {user?.subscription === 'premium' ? 'Studio+' : 'Explorer'}
+              </Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.subscription === 'premium' ? '∞' : '1'}</Text>
-            <Text style={styles.statLabel}>{t('subscription')}</Text>
-          </View>
-        </View>
 
-        {user?.subscription !== 'premium' && (
-          <>
-            <TouchableOpacity testID="upgrade-btn" onPress={handleUpgrade} activeOpacity={0.8} disabled={purchasing}>
-              <LinearGradient
-                colors={['#F3D088', '#D1A354']}
-                style={styles.upgradeBtn}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{user?.analyses_count || 0}</Text>
+              <Text style={styles.statLabel}>toplam dosya</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{user?.subscription === 'premium' ? 'Acik' : 'Sinirli'}</Text>
+              <Text style={styles.statLabel}>kullanim modu</Text>
+            </View>
+          </View>
+
+          {user?.subscription !== 'premium' && (
+            <View style={styles.plusCard}>
+              <Text style={styles.plusEyebrow}>Studio+</Text>
+              <Text style={styles.plusTitle}>Daha farkli bir deneyim icin acilan araclar</Text>
+              <Text style={styles.plusDescription}>
+                Ayna Atlas ucretli katmaninda sadece kilit acmak yerine daha zengin bir planlama
+                dosyasi sunar.
+              </Text>
+
+              <View style={styles.plusFeatureList}>
+                {STUDIO_PLUS_FEATURES.map((feature) => (
+                  <View key={feature} style={styles.plusFeatureRow}>
+                    <Ionicons name="checkmark-circle-outline" size={18} color={COLORS.brand.primary} />
+                    <Text style={styles.plusFeatureText}>{feature}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                testID="upgrade-btn"
+                onPress={handleUpgrade}
+                activeOpacity={0.88}
+                disabled={purchasing}
               >
-                {purchasing ? (
-                  <ActivityIndicator size="small" color="#000" />
+                <LinearGradient colors={COLORS.gradient.sunrise} style={styles.upgradeButton}>
+                  {purchasing ? (
+                    <ActivityIndicator size="small" color={COLORS.text.inverse} />
+                  ) : (
+                    <>
+                      <Ionicons name="sparkles-outline" size={18} color={COLORS.text.inverse} />
+                      <Text style={styles.upgradeButtonText}>Studio+ baslat</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                testID="restore-btn"
+                onPress={handleRestore}
+                activeOpacity={0.8}
+                disabled={restoring}
+                style={styles.restoreButton}
+              >
+                {restoring ? (
+                  <ActivityIndicator size="small" color={COLORS.text.secondary} />
                 ) : (
-                  <>
-                    <Ionicons name="diamond" size={20} color="#000" />
-                    <Text style={styles.upgradeText}>{t('upgradePremium')}</Text>
-                  </>
+                  <Text style={styles.restoreButtonText}>Satin alimlari geri yukle</Text>
                 )}
-              </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>Ayarlar</Text>
+
+            <TouchableOpacity testID="language-toggle" style={styles.row} onPress={() => setLang(lang === 'tr' ? 'en' : 'tr')}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="globe-outline" size={20} color={COLORS.text.secondary} />
+                <Text style={styles.rowText}>Dil</Text>
+              </View>
+              <Text style={styles.rowValue}>{lang === 'tr' ? 'Turkce' : 'English'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity testID="restore-btn" onPress={handleRestore} activeOpacity={0.7} disabled={restoring} style={styles.restoreBtn}>
-              {restoring ? (
-                <ActivityIndicator size="small" color={COLORS.text.tertiary} />
-              ) : (
-                <Text style={styles.restoreText}>Satın Alımları Geri Yükle</Text>
-              )}
+
+            <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://faceglowpro.app/privacy')}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="shield-outline" size={20} color={COLORS.text.secondary} />
+                <Text style={styles.rowText}>Gizlilik politikasi</Text>
+              </View>
+              <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
             </TouchableOpacity>
-          </>
-        )}
 
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionLabel}>{t('settings')}</Text>
+            <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://faceglowpro.app/terms')}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="document-text-outline" size={20} color={COLORS.text.secondary} />
+                <Text style={styles.rowText}>Kullanim kosullari</Text>
+              </View>
+              <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
+            </TouchableOpacity>
 
-          <TouchableOpacity testID="language-toggle" style={styles.settingRow} onPress={toggleLang}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="globe-outline" size={20} color={COLORS.text.secondary} />
-              <Text style={styles.settingText}>{t('language')}</Text>
-            </View>
-            <Text style={styles.settingValue}>{lang === 'tr' ? 'Türkçe' : 'English'}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity testID="logout-btn" style={styles.row} onPress={handleLogout}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="log-out-outline" size={20} color={COLORS.status.error} />
+                <Text style={[styles.rowText, { color: COLORS.status.error }]}>Cikis yap</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity testID="logout-btn" style={styles.settingRow} onPress={handleLogout}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="log-out-outline" size={20} color={COLORS.status.error} />
-              <Text style={[styles.settingText, { color: COLORS.status.error }]}>{t('logout')}</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingRow} onPress={() => Linking.openURL('https://faceglowpro.app/privacy')}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="shield-outline" size={20} color={COLORS.text.secondary} />
-              <Text style={styles.settingText}>Gizlilik Politikası</Text>
-            </View>
-            <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingRow} onPress={() => Linking.openURL('https://faceglowpro.app/terms')}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="document-text-outline" size={20} color={COLORS.text.secondary} />
-              <Text style={styles.settingText}>Kullanım Koşulları</Text>
-            </View>
-            <Ionicons name="open-outline" size={16} color={COLORS.text.tertiary} />
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.legalNote}>
-          Uygulama içi satın alma işlemleri Apple App Store üzerinden gerçekleştirilmektedir.
-          Abonelik iptali için iOS Ayarlar → Apple ID → Abonelikler menüsünü kullanın.
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={styles.footerNote}>
+            Abonelik ve satin alma islemleri App Store tarafinda yonetilir. Iptal veya degisiklik
+            icin iOS Ayarlar &gt; Apple ID &gt; Abonelikler yolunu kullanabilirsin.
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg.primary },
+  root: { flex: 1, backgroundColor: COLORS.bg.primary },
+  container: { flex: 1 },
   scroll: { padding: SPACING.lg, paddingBottom: 40 },
-  title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 24 },
+  eyebrow: { ...FONT.xs, color: COLORS.brand.primary, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 },
+  screenTitle: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 8 },
+  screenSubtitle: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 21, marginBottom: 20 },
   profileCard: {
-    alignItems: 'center', backgroundColor: COLORS.surface.card,
-    borderRadius: RADIUS.lg, padding: 28,
-    borderWidth: 1, borderColor: COLORS.surface.glassBorder, marginBottom: 20,
+    backgroundColor: 'rgba(16,27,50,0.92)',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 16,
   },
   avatar: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: COLORS.bg.tertiary,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: 'rgba(107,227,192,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: { ...FONT.h2, color: COLORS.brand.primary },
-  profileName: { ...FONT.h3, color: COLORS.text.primary },
-  profileEmail: { ...FONT.small, color: COLORS.text.secondary, marginTop: 4 },
-  subBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12,
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface.glass, borderWidth: 1, borderColor: COLORS.surface.glassBorder,
-  },
-  subBadgePremium: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(229,192,123,0.1)' },
-  subText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '600' },
-  subTextPremium: { color: COLORS.brand.primary },
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  avatarText: { ...FONT.h3, color: COLORS.brand.primary, fontWeight: '800' },
+  profileMeta: { flex: 1 },
+  profileName: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 4 },
+  profileEmail: { ...FONT.xs, color: COLORS.text.secondary },
+  planPill: { borderRadius: RADIUS.full, paddingHorizontal: 12, paddingVertical: 8 },
+  planPillText: { ...FONT.xs, fontWeight: '800' },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   statCard: {
-    flex: 1, backgroundColor: COLORS.surface.card, borderRadius: RADIUS.md,
-    padding: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: COLORS.surface.glassBorder,
+    flex: 1,
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: 'rgba(16,27,50,0.92)',
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
   },
-  statValue: { ...FONT.h2, color: COLORS.brand.primary },
-  statLabel: { ...FONT.xs, color: COLORS.text.secondary, marginTop: 4 },
-  upgradeBtn: {
-    borderRadius: RADIUS.md, paddingVertical: 16,
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 10, marginBottom: 10,
+  statValue: { ...FONT.h3, color: COLORS.text.primary, marginBottom: 4 },
+  statLabel: { ...FONT.xs, color: COLORS.text.tertiary },
+  plusCard: {
+    backgroundColor: 'rgba(16,27,50,0.92)',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,176,120,0.22)',
+    marginBottom: 16,
   },
-  upgradeText: { ...FONT.body, fontWeight: '700', color: COLORS.text.inverse },
-  restoreBtn: {
-    alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 10, marginBottom: 14,
+  plusEyebrow: { ...FONT.xs, color: COLORS.brand.secondary, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 6 },
+  plusTitle: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 8 },
+  plusDescription: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20, marginBottom: 14 },
+  plusFeatureList: { gap: 10, marginBottom: 16 },
+  plusFeatureRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  plusFeatureText: { ...FONT.small, color: COLORS.text.secondary, flex: 1, lineHeight: 20 },
+  upgradeButton: {
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
   },
-  restoreText: { ...FONT.small, color: COLORS.text.tertiary, textDecorationLine: 'underline' },
-  settingsSection: { marginTop: 8 },
-  sectionLabel: {
-    ...FONT.small, color: COLORS.text.tertiary, marginBottom: 12,
-    textTransform: 'uppercase', letterSpacing: 1,
+  upgradeButtonText: { ...FONT.body, color: COLORS.text.inverse, fontWeight: '800' },
+  restoreButton: { alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
+  restoreButtonText: { ...FONT.small, color: COLORS.text.tertiary, textDecorationLine: 'underline' },
+  settingsCard: {
+    backgroundColor: 'rgba(16,27,50,0.92)',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
   },
-  settingRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surface.glassBorder,
+  sectionTitle: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  settingText: { ...FONT.body, color: COLORS.text.primary },
-  settingValue: { ...FONT.small, color: COLORS.text.secondary },
-  legalNote: {
-    ...FONT.xs, color: COLORS.text.tertiary,
-    textAlign: 'center', marginTop: 32, lineHeight: 18,
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowText: { ...FONT.body, color: COLORS.text.primary },
+  rowValue: { ...FONT.small, color: COLORS.text.secondary },
+  footerNote: {
+    ...FONT.xs,
+    color: COLORS.text.tertiary,
+    textAlign: 'center',
+    marginTop: 28,
+    lineHeight: 18,
   },
 });

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet } from 'react-native';
+import { COLORS } from '../../src/utils/theme';
 
 export default function TabLayout() {
   return (
@@ -8,8 +9,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.bar,
-        tabBarActiveTintColor: '#E5C07B',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.3)',
+        tabBarActiveTintColor: COLORS.brand.primary,
+        tabBarInactiveTintColor: COLORS.text.tertiary,
         tabBarLabelStyle: styles.label,
         tabBarBackground: () => (
           <View style={styles.barBg} />
@@ -19,29 +20,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Ana Sayfa',
-          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+          title: 'Studio',
+          tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Keşfet',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
+          title: 'Atlas',
+          tabBarIcon: ({ color, size }) => <Ionicons name="book-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'Geçmiş',
-          tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} />,
+          title: 'Dosyalar',
+          tabBarIcon: ({ color, size }) => <Ionicons name="albums-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          title: 'Hesabim',
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-circle-outline" size={size} color={color} />,
         }}
       />
     </Tabs>
@@ -51,7 +52,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.15)',
+    borderTopColor: 'rgba(107,227,192,0.18)',
     borderTopWidth: 1,
     height: 85,
     paddingBottom: 25,
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
   },
   barBg: {
     flex: 1,
-    backgroundColor: '#0E0B06',
+    backgroundColor: '#08111F',
   },
   label: { fontSize: 11, fontWeight: '600' },
 });

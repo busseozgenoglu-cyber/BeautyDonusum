@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
@@ -9,12 +9,10 @@ import Animated, {
   withRepeat, withTiming, withSequence, withDelay,
   interpolate, Easing,
 } from 'react-native-reanimated';
-import api, { setToken } from '../../src/utils/api';
+import api from '../../src/utils/api';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
 import { useAuth } from '../../src/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
-
-const { width: W } = Dimensions.get('window');
 
 function Ring({ index }: { index: number }) {
   const anim = useSharedValue(0);
@@ -76,7 +74,7 @@ const STEPS = [
 export default function LoadingScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
-  const { autoLogin, user } = useAuth();
+  const { autoLogin } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const cancelled = useRef(false);
@@ -119,15 +117,15 @@ export default function LoadingScreen() {
     };
     run();
     return () => { cancelled.current = true; };
-  }, []);
+  }, [autoLogin, category, router]);
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
   return (
     <View style={styles.root}>
-      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={8} />
-      <LinearGradient colors={['rgba(6,6,12,0.85)', 'rgba(10,10,20,0.9)', 'rgba(6,6,12,0.85)']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#08111B', '#0B1724', '#132938']} style={StyleSheet.absoluteFill} />
       <View style={styles.ambientGlow} />
+      <View style={styles.ambientGlowSecondary} />
 
       <SafeAreaView style={styles.container}>
         {/* Rings + Face icon */}
@@ -144,7 +142,10 @@ export default function LoadingScreen() {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Analiz Ediliyor</Text>
+        <Text style={styles.title}>Ayna dosyan hazırlanıyor</Text>
+        <Text style={styles.subtitle}>
+          Fotoğrafın üzerinden ölçümler, öneri notları ve danışma öncesi kontrol başlıkları çıkarılıyor.
+        </Text>
 
         {/* Steps */}
         <View style={styles.stepsWrap}>
@@ -175,7 +176,7 @@ export default function LoadingScreen() {
           <View style={styles.errorWrap}>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-              <Text style={styles.backBtnText}>← Geri Dön</Text>
+              <Text style={styles.backBtnText}>← Düzenlemeye dön</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -191,9 +192,14 @@ function delay(ms: number) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg.primary },
   ambientGlow: {
-    position: 'absolute', width: 400, height: 400,
-    borderRadius: 200, backgroundColor: 'rgba(229,192,123,0.05)',
-    alignSelf: 'center', top: '20%',
+    position: 'absolute', width: 360, height: 360,
+    borderRadius: 180, backgroundColor: 'rgba(91,192,190,0.12)',
+    alignSelf: 'center', top: '18%',
+  },
+  ambientGlowSecondary: {
+    position: 'absolute', width: 260, height: 260,
+    borderRadius: 130, backgroundColor: 'rgba(247,183,51,0.10)',
+    right: -60, bottom: 120,
   },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
 
@@ -209,7 +215,15 @@ const styles = StyleSheet.create({
   scanLineGrad: { flex: 1, height: 2 },
 
   // Text
-  title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 32, letterSpacing: -0.3 },
+  title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 10, letterSpacing: -0.3, textAlign: 'center' },
+  subtitle: {
+    ...FONT.small,
+    color: COLORS.text.secondary,
+    marginBottom: 32,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 320,
+  },
 
   // Steps
   stepsWrap: { width: '100%', marginBottom: 32, gap: 14 },

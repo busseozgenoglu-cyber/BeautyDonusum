@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "FaceGlow Pro",
-    "slug": "faceglow-pro",
+    "name": "Ayna Atlas",
+    "slug": "ayna-atlas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "faceglowpro",
+    "scheme": "aynaatlas",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {

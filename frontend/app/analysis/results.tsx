@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Image, Alert, ActivityIndicator,
@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLang } from '../../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
+import { COLORS, FONT, SPACING, RADIUS, SHADOWS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import api from '../../src/utils/api';
 import { purchasePremium } from '../../src/utils/purchases';
+import { buildQuestionBank, buildTimeline, getConciergeSummary, getPriorityTone } from '../../src/utils/journeyPlanner';
 
 const METRIC_LABELS: Record<string, string> = {
   symmetry_score: 'Simetri', jawline_definition: 'Çene Hattı',
@@ -57,6 +58,7 @@ const mStyles = StyleSheet.create({
 function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
   const prioColor = rec.priority === 'high' ? COLORS.status.error : rec.priority === 'medium' ? COLORS.status.warning : COLORS.status.success;
   const hasCost = rec.cost_min_tl != null && rec.cost_max_tl != null;
+  const tone = getPriorityTone(rec.priority);
   return (
     <View style={[rStyles.card, locked && rStyles.locked]}>
       <View style={rStyles.header}>
@@ -82,7 +84,7 @@ function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
       {locked ? (
         <View style={rStyles.lockRow}>
           <Ionicons name="lock-closed" size={16} color={COLORS.brand.primary} />
-          <Text style={rStyles.lockText}>Premium ile tüm önerileri görün</Text>
+          <Text style={rStyles.lockText}>Studio+ ile tüm önerileri ve hazir sorulari görün</Text>
         </View>
       ) : (
         <>
@@ -94,6 +96,12 @@ function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
               <Text style={rStyles.improvVal}>{Math.round(rec.improvement_potential * 100)}%</Text>
             </View>
           )}
+          <View style={rStyles.tipRow}>
+            <Ionicons name="chatbubble-ellipses-outline" size={15} color={tone.accent} />
+            <Text style={[rStyles.tipText, { color: tone.accent }]}>
+              Klinige sor: {tone.question}
+            </Text>
+          </View>
         </>
       )}
     </View>
@@ -119,6 +127,16 @@ const rStyles = StyleSheet.create({
   improvVal: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
   lockRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 },
   lockText: { ...FONT.small, color: COLORS.brand.primary },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+  },
+  tipText: { ...FONT.xs, flex: 1, lineHeight: 18, fontWeight: '600' },
 });
 
 export default function ResultsScreen() {
@@ -133,6 +151,22 @@ export default function ResultsScreen() {
   const [purchasing, setPurchasing] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
   const isPremium = user?.subscription === 'premium';
+  const metrics = analysis?.metrics || {};
+  const recs = analysis?.recommendations || {};
+  const recList: any[] = recs.recommendations || [];
+  const normalizedCategory = analysis?.category === 'cerrahi' ? 'cerrahi' : 'medikal';
+  const questionPrompts = useMemo(
+    () => buildQuestionBank(normalizedCategory, recList),
+    [normalizedCategory, recList]
+  );
+  const timeline = useMemo(
+    () => buildTimeline(normalizedCategory, recList),
+    [normalizedCategory, recList]
+  );
+  const conciergeSummary = useMemo(
+    () => getConciergeSummary(normalizedCategory, recs.face_shape, displayScore),
+    [normalizedCategory, recs.face_shape, displayScore]
+  );
 
   useEffect(() => {
     const fetch = async () => {
@@ -205,14 +239,11 @@ export default function ResultsScreen() {
     );
   }
 
-  const metrics = analysis?.metrics || {};
-  const recs = analysis?.recommendations || {};
-  const recList: any[] = recs.recommendations || [];
-
   return (
     <View style={styles.root}>
-      <LinearGradient colors={['#0A0A0A', '#0D0D0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={COLORS.gradient.pageShell} style={StyleSheet.absoluteFill} />
       <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
 
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
@@ -225,35 +256,39 @@ export default function ResultsScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInDown.duration(320)} style={styles.conciergeStrip}>
+            <Ionicons name="sparkles-outline" size={16} color={COLORS.brand.primary} />
+            <Text style={styles.conciergeStripText}>{conciergeSummary}</Text>
+          </Animated.View>
 
           {/* Score Card */}
-          <Animated.View entering={FadeInDown.duration(400)} style={styles.scoreCardOuter}>
+          <Animated.View entering={FadeInDown.delay(40).duration(400)} style={styles.scoreCardOuter}>
             <LinearGradient
-              colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.02)', 'transparent']}
+              colors={['rgba(91,179,160,0.20)', 'rgba(91,179,160,0.06)', 'rgba(13,19,33,0.10)']}
               style={styles.scoreCard}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             >
               <View style={styles.scoreRow}>
                 <View>
-                  <Text style={styles.scoreLabel}>Uyum Skoru</Text>
+                  <Text style={styles.scoreLabel}>Hazırlık skoru</Text>
                   <View style={styles.scoreNumRow}>
                     <Text style={styles.scoreNum}>{displayScore.toFixed(1)}</Text>
                     <Text style={styles.scoreMax}>/10</Text>
                   </View>
                 </View>
                 <View style={styles.scoreRing}>
-                  <LinearGradient colors={['#F5E0A0', '#C9963A']} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <LinearGradient colors={COLORS.gradient.highlight} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Text style={styles.scoreRingText}>{displayScore.toFixed(1)}</Text>
                   </LinearGradient>
                 </View>
               </View>
               <View style={styles.catBadge}>
                 <Ionicons
-                  name={analysis?.category === 'cerrahi' ? 'cut-outline' : 'sparkles-outline'}
+                  name={analysis?.category === 'cerrahi' ? 'git-compare-outline' : 'color-wand-outline'}
                   size={14} color={COLORS.brand.primary}
                 />
                 <Text style={styles.catText}>
-                  {analysis?.category === 'cerrahi' ? t('surgical') : t('medicalAesthetic')}
+                  {analysis?.category === 'cerrahi' ? 'Cerrahi yol haritasi' : 'Bakim ve medikal plan'}
                 </Text>
               </View>
             </LinearGradient>
@@ -261,51 +296,78 @@ export default function ResultsScreen() {
 
           {/* Summary */}
           {recs.summary ? (
-            <Animated.View entering={FadeInDown.delay(150).duration(400)} style={styles.summaryCard}>
+            <Animated.View entering={FadeInDown.delay(120).duration(400)} style={styles.summaryCard}>
               <View style={styles.summaryIcon}>
-                <Ionicons name="document-text-outline" size={18} color={COLORS.brand.primary} />
+                <Ionicons name="reader-outline" size={18} color={COLORS.brand.primary} />
               </View>
               <Text style={styles.summaryText}>{recs.summary}</Text>
             </Animated.View>
           ) : null}
 
+          <Animated.View entering={FadeInDown.delay(170).duration(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Sizin için hazırlanmış rota</Text>
+            <View style={styles.conciergeCard}>
+              {timeline.map((phase, index) => (
+                <View key={phase.title} style={[styles.phaseRow, index === journeyPlan.phases.length - 1 && styles.phaseRowLast]}>
+                  <View style={styles.phaseRail}>
+                    <View style={styles.phaseDot}>
+                      <Text style={styles.phaseDotText}>{index + 1}</Text>
+                    </View>
+                    {index < journeyPlan.phases.length - 1 && <View style={styles.phaseLine} />}
+                  </View>
+                  <View style={styles.phaseBody}>
+                    <Text style={styles.phaseTitle}>{phase.title}</Text>
+                    <Text style={styles.phaseDesc}>{phase.description}</Text>
+                    <View style={styles.phaseTags}>
+                      {[phase.detail].map((item) => (
+                        <View key={item} style={styles.phaseTag}>
+                          <Text style={styles.phaseTagText}>{item}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
           {/* Face Shape Card */}
           {recs.face_shape ? (
-            <Animated.View entering={FadeInDown.delay(180).duration(400)} style={styles.section}>
-              <Text style={styles.sectionTitle}>Yüz Şekli Analizi</Text>
+            <Animated.View entering={FadeInDown.delay(220).duration(400)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Uyum ve stil notu</Text>
               <View style={styles.faceShapeCard}>
                 <View style={styles.faceShapeHeader}>
-                  <LinearGradient colors={['rgba(229,192,123,0.25)', 'rgba(229,192,123,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name="scan-outline" size={22} color="#E5C07B" />
+                  <LinearGradient colors={['rgba(91,179,160,0.24)', 'rgba(91,179,160,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name="sparkles-outline" size={22} color={COLORS.brand.primary} />
                   </LinearGradient>
                   <View style={styles.faceShapeMeta}>
-                    <Text style={styles.faceShapeName}>{recs.face_shape.charAt(0).toUpperCase() + recs.face_shape.slice(1)} Yüz</Text>
+                    <Text style={styles.faceShapeName}>{recs.face_shape.charAt(0).toUpperCase() + recs.face_shape.slice(1)} profil</Text>
                     <Text style={styles.faceShapeDesc} numberOfLines={2}>{recs.face_shape_tips?.description}</Text>
                   </View>
                 </View>
                 {recs.face_shape_tips?.makeup ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
-                      <Text style={styles.faceShapeTipLabel}>Makyaj</Text>
+                      <Text style={styles.faceShapeTipLabel}>Gorsel denge</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.makeup}</Text>
                     </View>
                   </View>
                 ) : null}
                 {recs.face_shape_tips?.hair ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
-                      <Text style={styles.faceShapeTipLabel}>Saç</Text>
+                      <Text style={styles.faceShapeTipLabel}>Kesim ve oran</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.hair}</Text>
                     </View>
                   </View>
                 ) : null}
                 {recs.face_shape_tips?.glasses ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
-                      <Text style={styles.faceShapeTipLabel}>Gözlük</Text>
+                      <Text style={styles.faceShapeTipLabel}>Aksesuar onerisi</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.glasses}</Text>
                     </View>
                   </View>
@@ -315,8 +377,8 @@ export default function ResultsScreen() {
           ) : null}
 
           {/* Metrics */}
-          <Animated.View entering={FadeInDown.delay(250).duration(400)} style={styles.section}>
-            <Text style={styles.sectionTitle}>Yüz Metrikleri</Text>
+          <Animated.View entering={FadeInDown.delay(270).duration(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Karar panosu metrikleri</Text>
             <View style={styles.metricsCard}>
               {Object.entries(metrics)
                 .filter(([key]) => key !== 'face_shape')
@@ -332,16 +394,28 @@ export default function ResultsScreen() {
           </Animated.View>
 
           {/* Recommendations */}
-          <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('recommendations')}</Text>
+          <Animated.View entering={FadeInDown.delay(360).duration(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Gorusmeye hazir oneriler</Text>
             {recList.map((rec: any, i: number) => (
               <RecCard key={i} rec={rec} locked={!isPremium && i > 0} />
             ))}
           </Animated.View>
 
+          <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Gorusmede sorun</Text>
+            <View style={styles.questionCard}>
+              {questionPrompts.map((question) => (
+                <View key={question} style={styles.questionRow}>
+                  <Ionicons name="help-circle-outline" size={16} color={COLORS.brand.primary} />
+                  <Text style={styles.questionText}>{question}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
           {/* Before / After */}
-          <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('beforeAfter')}</Text>
+          <Animated.View entering={FadeInDown.delay(470).duration(400)} style={styles.section}>
+            <Text style={styles.sectionTitle}>Studio görsel prova</Text>
             {analysis?.transformation_base64 ? (
               <View style={styles.transformCard}>
                 <Image
@@ -377,9 +451,9 @@ export default function ResultsScreen() {
                       color={isPremium ? COLORS.brand.primary : COLORS.text.tertiary}
                     />
                     <Text style={[styles.transformPlaceholderText, isPremium && { color: COLORS.brand.primary }]}>
-                      {isPremium ? 'AI Dönüşüm Oluştur' : 'Premium ile AI Dönüşüm'}
+                      {isPremium ? 'Gorsel prova olustur' : 'Studio+ ile gorsel prova'}
                     </Text>
-                    {!isPremium && <Text style={styles.transformSubText}>Önce ve sonra simülasyonu</Text>}
+                    {!isPremium && <Text style={styles.transformSubText}>Alternatif gorunum ve karar destegi</Text>}
                   </LinearGradient>
                 )}
               </TouchableOpacity>
@@ -389,7 +463,7 @@ export default function ResultsScreen() {
           {/* Disclaimer */}
           <View style={styles.disclaimerRow}>
             <Ionicons name="information-circle-outline" size={13} color={COLORS.text.tertiary} />
-            <Text style={styles.disclaimerText}>{t('disclaimer')}</Text>
+            <Text style={styles.disclaimerText}>Bu rapor medikal tani yerine gecmez; planlama ve gorusme hazirligi amaciyla sunulur.</Text>
           </View>
 
         </ScrollView>
@@ -414,48 +488,48 @@ export default function ResultsScreen() {
               </TouchableOpacity>
 
               <LinearGradient
-                colors={['rgba(229,192,123,0.18)', 'rgba(229,192,123,0.04)', 'transparent']}
+                colors={['rgba(91,179,160,0.18)', 'rgba(91,179,160,0.04)', 'transparent']}
                 style={styles.paywallTopGlow}
               />
 
               {/* Free Trial Badge */}
               <View style={styles.trialBadge}>
-                <LinearGradient colors={['#2A1F00', '#1A1200']} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="gift-outline" size={13} color="#F5C842" />
-                  <Text style={styles.trialBadgeText}>7 GÜN ÜCRETSİZ DENEME</Text>
+                <LinearGradient colors={['#0F2830', '#13222B']} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="gift-outline" size={13} color={COLORS.brand.primary} />
+                <Text style={styles.trialBadgeText}>7 GUN STUDIO+ DENEME</Text>
                 </LinearGradient>
               </View>
 
               {/* Icon */}
               <View style={styles.paywallIconWrap}>
-                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={styles.paywallIconGrad}>
-                  <Ionicons name="diamond" size={30} color="#0A0700" />
+                <LinearGradient colors={COLORS.gradient.highlight} style={styles.paywallIconGrad}>
+                  <Ionicons name="layers-outline" size={30} color="#091318" />
                 </LinearGradient>
               </View>
 
-              <Text style={styles.paywallTitle}>Premium'a Geç</Text>
+              <Text style={styles.paywallTitle}>Studio+ kilidini ac</Text>
               <Text style={styles.paywallSubtitle}>
-                Uzman cerrah seviyesinde AI analiz
+                Karar dosyani eksiksiz hale getir
               </Text>
               <Text style={styles.paywallDesc}>
-                Altın oran hesaplamaları, estetik cerrah önerileri ve kişisel dönüşüm simülasyonuyla yüzünüzün gerçek potansiyelini keşfedin.
+                Daha fazla oneri, hazir soru kartlari, detayli yol haritasi ve gorsel prova ile danisma surecine daha hazirlikli gidin.
               </Text>
 
               {/* Social Proof */}
               <View style={styles.socialProof}>
                 <View style={styles.socialItem}>
-                  <Text style={styles.socialNum}>AI</Text>
-                  <Text style={styles.socialLabel}>Destekli</Text>
+                  <Text style={styles.socialNum}>1:1</Text>
+                  <Text style={styles.socialLabel}>Notlar</Text>
                 </View>
                 <View style={styles.socialDivider} />
                 <View style={styles.socialItem}>
-                  <Text style={styles.socialNum}>10+</Text>
-                  <Text style={styles.socialLabel}>Metrik</Text>
+                  <Text style={styles.socialNum}>3</Text>
+                  <Text style={styles.socialLabel}>Asamali plan</Text>
                 </View>
                 <View style={styles.socialDivider} />
                 <View style={styles.socialItem}>
                   <Text style={styles.socialNum}>HD</Text>
-                  <Text style={styles.socialLabel}>Simülasyon</Text>
+                  <Text style={styles.socialLabel}>Görsel prova</Text>
                 </View>
               </View>
 
@@ -463,29 +537,29 @@ export default function ResultsScreen() {
               <View style={styles.featureGrid}>
                 {[
                   {
-                    icon: 'analytics-outline',
-                    title: 'Altın Oran Analizi',
-                    desc: 'Fibonacci oranlarıyla yüz geometrinizi ölçün',
+                    icon: 'list-outline',
+                    title: 'Hazir soru kartlari',
+                    desc: 'Gorusmede sorulacak sorular otomatik uretilir',
                   },
                   {
-                    icon: 'medical-outline',
-                    title: 'Cerrah Tavsiyeleri',
-                    desc: 'Rinoplasti, çene kontürleme ve daha fazlası',
+                    icon: 'trail-sign-outline',
+                    title: 'Asamali yol haritasi',
+                    desc: 'Bugun, gorusme gunu ve bakim sonrasi plani gorun',
                   },
                   {
                     icon: 'sparkles-outline',
-                    title: 'AI Dönüşüm Simülasyonu',
-                    desc: 'İşlem öncesi gerçekçi HD görüntünüzü görün',
+                    title: 'Gorsel prova',
+                    desc: 'Alternatif gorunumu bir referans kare olarak kaydedin',
                   },
                   {
-                    icon: 'trending-up-outline',
-                    title: 'İlerleme Takibi',
-                    desc: 'Öncesi/sonrası karşılaştırma geçmişi',
+                    icon: 'bookmark-outline',
+                    title: 'Kisisel not yapisi',
+                    desc: 'Oncelik tonuna gore ozet ve takip notlari',
                   },
                   {
                     icon: 'infinite-outline',
-                    title: 'Sınırsız Analiz',
-                    desc: 'İstediğiniz kadar analiz yapın',
+                    title: 'Sinirsiz plan denemesi',
+                    desc: 'Farkli fotograf ve kategorilerle tekrar calisin',
                   },
                 ].map((f, i) => (
                   <View key={i} style={styles.featureItem}>
@@ -507,13 +581,13 @@ export default function ResultsScreen() {
               {/* Pricing */}
               <View style={styles.pricingBox}>
                 <LinearGradient
-                  colors={['rgba(229,192,123,0.08)', 'rgba(229,192,123,0.02)']}
+                  colors={['rgba(91,179,160,0.10)', 'rgba(91,179,160,0.03)']}
                   style={styles.pricingGrad}
                 >
                   <View style={styles.pricingRow}>
                     <View>
-                      <Text style={styles.pricingFree}>İlk 7 gün ücretsiz</Text>
-                      <Text style={styles.pricingAfter}>Sonrasında aylık ₺599 otomatik yenilenir</Text>
+                      <Text style={styles.pricingFree}>Ilk 7 gun ucretsiz</Text>
+                      <Text style={styles.pricingAfter}>Sonrasinda aylik ₺599 ile Studio+ yenilenir</Text>
                     </View>
                     <View style={styles.pricingRight}>
                       <Text style={styles.pricingNow}>₺599/ay</Text>
@@ -531,24 +605,24 @@ export default function ResultsScreen() {
                 disabled={purchasing}
               >
                 <LinearGradient
-                  colors={['#F8ECC0', '#E5C07B', '#C08A28']}
+                  colors={COLORS.gradient.highlight}
                   style={styles.paywallBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
                   {purchasing ? (
-                    <ActivityIndicator size="small" color="#0A0700" />
+                    <ActivityIndicator size="small" color="#091318" />
                   ) : (
                     <>
-                      <Ionicons name="diamond" size={18} color="#0A0700" />
-                      <Text style={styles.paywallBtnText}>7 Gün Ücretsiz Başla</Text>
+                      <Ionicons name="layers-outline" size={18} color="#091318" />
+                      <Text style={styles.paywallBtnText}>Studio+ denemesini baslat</Text>
                     </>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
 
               <Text style={styles.paywallNote}>
-                İstediğiniz zaman iptal edebilirsiniz · App Store üzerinden ödeme
+                Istediginiz zaman iptal edebilirsiniz · Odeme App Store uzerinden gerceklesir
               </Text>
 
               {__DEV__ && (
@@ -559,7 +633,7 @@ export default function ResultsScreen() {
                   }}
                   style={styles.devBypass}
                 >
-                  <Text style={styles.devBypassText}>🧪 TEST: Paywallı Geç</Text>
+                  <Text style={styles.devBypassText}>TEST: Paywalli Gec</Text>
                 </TouchableOpacity>
               )}
 
@@ -567,11 +641,11 @@ export default function ResultsScreen() {
               <View style={styles.trustRow}>
                 <View style={styles.trustItem}>
                   <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.text.tertiary} />
-                  <Text style={styles.trustText}>Güvenli ödeme</Text>
+                  <Text style={styles.trustText}>Guvenli odeme</Text>
                 </View>
                 <View style={styles.trustItem}>
                   <Ionicons name="lock-closed-outline" size={14} color={COLORS.text.tertiary} />
-                  <Text style={styles.trustText}>Veriler şifreli</Text>
+                  <Text style={styles.trustText}>Veriler sifreli</Text>
                 </View>
                 <View style={styles.trustItem}>
                   <Ionicons name="refresh-outline" size={14} color={COLORS.text.tertiary} />
@@ -592,7 +666,12 @@ const styles = StyleSheet.create({
   glowTop: {
     position: 'absolute', top: -80, right: -80,
     width: 300, height: 300, borderRadius: 150,
-    backgroundColor: 'rgba(229,192,123,0.06)',
+    backgroundColor: 'rgba(91,179,160,0.10)',
+  },
+  glowBottom: {
+    position: 'absolute', bottom: -110, left: -80,
+    width: 280, height: 280, borderRadius: 140,
+    backgroundColor: 'rgba(235,122,90,0.10)',
   },
   safeArea: { flex: 1 },
   header: {
@@ -602,9 +681,29 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' },
   headerTitle: { ...FONT.h4, color: COLORS.text.primary },
   scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 48 },
+  conciergeStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: COLORS.surface.muted,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(91,179,160,0.18)',
+    marginBottom: 16,
+  },
+  conciergeStripText: { ...FONT.xs, color: COLORS.text.secondary, flex: 1, lineHeight: 18 },
 
   // Score
-  scoreCardOuter: { borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)' },
+  scoreCardOuter: {
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(91,179,160,0.18)',
+    ...SHADOWS.card,
+  },
   scoreCard: { padding: 24 },
   scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   scoreLabel: { ...FONT.small, color: COLORS.text.secondary, marginBottom: 4 },
@@ -613,12 +712,12 @@ const styles = StyleSheet.create({
   scoreMax: { ...FONT.h3, color: COLORS.text.tertiary },
   scoreRing: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden' },
   scoreRingFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scoreRingText: { fontSize: 22, fontWeight: '800', color: '#0A0700' },
+  scoreRingText: { fontSize: 22, fontWeight: '800', color: '#091318' },
   catBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: RADIUS.full, backgroundColor: 'rgba(229,192,123,0.08)',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)',
+    borderRadius: RADIUS.full, backgroundColor: 'rgba(91,179,160,0.10)',
+    borderWidth: 1, borderColor: 'rgba(91,179,160,0.20)',
   },
   catText: { ...FONT.xs, color: COLORS.brand.primary, fontWeight: '600' },
 
@@ -635,13 +734,54 @@ const styles = StyleSheet.create({
   // Section
   section: { marginBottom: 28 },
   sectionTitle: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 14 },
+  conciergeCard: {
+    backgroundColor: COLORS.surface.card,
+    borderRadius: RADIUS.xl,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+  },
+  phaseRow: { flexDirection: 'row', gap: 14, paddingBottom: 16 },
+  phaseRowLast: { paddingBottom: 0 },
+  phaseRail: { alignItems: 'center' },
+  phaseDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(91,179,160,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phaseDotText: { ...FONT.xs, color: COLORS.brand.primary, fontWeight: '800' },
+  phaseLine: { width: 2, flex: 1, backgroundColor: 'rgba(91,179,160,0.16)', marginTop: 6 },
+  phaseBody: { flex: 1 },
+  phaseTitle: { ...FONT.body, color: COLORS.text.primary, fontWeight: '700', marginBottom: 4 },
+  phaseDesc: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20, marginBottom: 10 },
+  phaseTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  phaseTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surface.muted,
+  },
+  phaseTagText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '600' },
   metricsCard: {
     backgroundColor: COLORS.surface.card, borderRadius: RADIUS.xl,
     padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
+  questionCard: {
+    backgroundColor: COLORS.surface.card,
+    borderRadius: RADIUS.xl,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+    gap: 12,
+  },
+  questionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  questionText: { ...FONT.small, color: COLORS.text.secondary, flex: 1, lineHeight: 20 },
 
   // Transform
-  transformCard: { borderRadius: RADIUS.xl, overflow: 'hidden' },
+  transformCard: { borderRadius: RADIUS.xl, overflow: 'hidden', ...SHADOWS.card },
   transformImage: { width: '100%', height: 340 },
   simBadge: {
     position: 'absolute', bottom: 14, left: 14,
@@ -674,7 +814,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingTop: 12, paddingBottom: 40,
     alignItems: 'center',
     borderWidth: 1, borderBottomWidth: 0,
-    borderColor: 'rgba(229,192,123,0.2)', overflow: 'hidden',
+    borderColor: 'rgba(91,179,160,0.2)', overflow: 'hidden',
   },
   paywallClose: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20 },
   paywallTopGlow: {
@@ -686,9 +826,9 @@ const styles = StyleSheet.create({
   trialBadgeGrad: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 6,
-    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,200,66,0.35)',
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(91,179,160,0.35)',
   },
-  trialBadgeText: { fontSize: 11, fontWeight: '800', color: '#F5C842', letterSpacing: 1.2 },
+  trialBadgeText: { fontSize: 11, fontWeight: '800', color: COLORS.brand.primary, letterSpacing: 1.2 },
   paywallIconWrap: { width: 68, height: 68, borderRadius: 20, overflow: 'hidden', marginBottom: 14 },
   paywallIconGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   paywallTitle: { fontSize: 26, fontWeight: '800', color: COLORS.text.primary, marginBottom: 4, textAlign: 'center', letterSpacing: -0.5 },
@@ -712,13 +852,13 @@ const styles = StyleSheet.create({
   featureIconBox: {
     width: 38, height: 38, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.18)',
+    borderWidth: 1, borderColor: 'rgba(91,179,160,0.18)',
   },
   featureTextWrap: { flex: 1 },
   featureTitle: { ...FONT.small, color: COLORS.text.primary, fontWeight: '600' },
   featureDesc: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 1, lineHeight: 15 },
   // Pricing
-  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(91,179,160,0.2)' },
   pricingGrad: { paddingVertical: 14, paddingHorizontal: 18 },
   pricingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pricingFree: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
@@ -728,7 +868,7 @@ const styles = StyleSheet.create({
   // Button
   paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 12 },
   paywallBtn: { paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  paywallBtnText: { fontSize: 17, color: '#0A0700', fontWeight: '800', letterSpacing: -0.2 },
+  paywallBtnText: { fontSize: 17, color: '#091318', fontWeight: '800', letterSpacing: -0.2 },
   paywallNote: { ...FONT.xs, color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
   // Trust
   trustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
@@ -742,15 +882,15 @@ const styles = StyleSheet.create({
   devBypassText: { fontSize: 12, color: '#FF6464', fontWeight: '700' },
 
   // Face Shape Card
-  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(91,179,160,0.2)' },
   faceShapeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 16 },
   faceShapeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   faceShapeMeta: { flex: 1 },
-  faceShapeName: { fontSize: 17, fontWeight: '700', color: '#E5C07B', marginBottom: 4 },
+  faceShapeName: { fontSize: 17, fontWeight: '700', color: COLORS.brand.primary, marginBottom: 4 },
   faceShapeDesc: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
   faceShapeTipRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(229,192,123,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(91,179,160,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   faceShapeTipContent: { flex: 1 },
-  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: '#E5C07B', letterSpacing: 0.5, marginBottom: 3 },
+  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: COLORS.brand.primary, letterSpacing: 0.5, marginBottom: 3 },
   faceShapeTipText: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
 });
