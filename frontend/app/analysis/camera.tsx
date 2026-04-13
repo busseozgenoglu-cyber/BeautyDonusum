@@ -78,7 +78,7 @@ export default function CameraScreen() {
 
         if (!b64 && asset.uri && Platform.OS !== 'web') {
           b64 = await FileSystem.readAsStringAsync(asset.uri, {
-            encoding: FileSystem.EncodingType.Base64,
+            encoding: 'base64',
           });
         }
 

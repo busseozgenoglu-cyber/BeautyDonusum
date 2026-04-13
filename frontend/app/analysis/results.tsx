@@ -32,7 +32,7 @@ function AnimatedMetricBar({ label, value, delay: delayMs = 0 }: { label: string
 
   useEffect(() => {
     width.value = withDelay(delayMs, withTiming(pct, { duration: 900, easing: Easing.out(Easing.quad) }));
-  }, []);
+  }, [delayMs, pct, width]);
 
   const barStyle = useAnimatedStyle(() => ({ width: `${width.value}%` as any }));
 
@@ -153,7 +153,7 @@ export default function ResultsScreen() {
   const isPremium = user?.subscription === 'premium';
   const metrics = analysis?.metrics || {};
   const recs = analysis?.recommendations || {};
-  const recList: any[] = recs.recommendations || [];
+  const recList = useMemo<any[]>(() => recs.recommendations || [], [recs.recommendations]);
   const normalizedCategory = analysis?.category === 'cerrahi' ? 'cerrahi' : 'medikal';
   const questionPrompts = useMemo(
     () => buildQuestionBank(normalizedCategory, recList),
@@ -181,7 +181,7 @@ export default function ResultsScreen() {
       }
     };
     if (analysisId) fetch();
-  }, [analysisId]);
+  }, [analysisId, isPremium]);
 
   // Animated score counter
   useEffect(() => {
@@ -308,16 +308,16 @@ export default function ResultsScreen() {
             <Text style={styles.sectionTitle}>Sizin için hazırlanmış rota</Text>
             <View style={styles.conciergeCard}>
               {timeline.map((phase, index) => (
-                <View key={phase.title} style={[styles.phaseRow, index === journeyPlan.phases.length - 1 && styles.phaseRowLast]}>
+                <View key={phase.title} style={[styles.phaseRow, index === timeline.length - 1 && styles.phaseRowLast]}>
                   <View style={styles.phaseRail}>
                     <View style={styles.phaseDot}>
                       <Text style={styles.phaseDotText}>{index + 1}</Text>
                     </View>
-                    {index < journeyPlan.phases.length - 1 && <View style={styles.phaseLine} />}
+                    {index < timeline.length - 1 && <View style={styles.phaseLine} />}
                   </View>
                   <View style={styles.phaseBody}>
                     <Text style={styles.phaseTitle}>{phase.title}</Text>
-                    <Text style={styles.phaseDesc}>{phase.description}</Text>
+                    <Text style={styles.phaseDesc}>{phase.detail}</Text>
                     <View style={styles.phaseTags}>
                       {[phase.detail].map((item) => (
                         <View key={item} style={styles.phaseTag}>

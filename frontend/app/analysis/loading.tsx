@@ -30,7 +30,7 @@ function Ring({ index }: { index: number }) {
         -1
       )
     );
-  }, []);
+  }, [anim, delay]);
 
   const style = useAnimatedStyle(() => ({
     opacity: interpolate(anim.value, [0, 0.2, 1], [0, 0.5, 0]),
@@ -55,7 +55,7 @@ function ScanLine() {
       ),
       -1
     );
-  }, []);
+  }, [pos]);
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: pos.value }] }));
   return (
     <Animated.View style={[styles.scanLine, style]}>

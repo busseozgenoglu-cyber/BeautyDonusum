@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAuth } from '../../src/context/AuthContext';
-import { COLORS, FONT, RADIUS, SPACING } from '../../src/utils/theme';
+import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
 import { JOURNEY_MODES, STUDIO_PILLARS } from '../../src/data/editorial';
 
 export default function HomeScreen() {
