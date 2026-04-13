@@ -1,199 +1,181 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated as RNAnimated, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated as RNAnimated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
+import { useLang } from '../../src/context/LanguageContext';
 import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
 
 const { width: W } = Dimensions.get('window');
 
-// Animated orbiting dots around face mesh
-function OrbitDot({ angle, radius, size, color }: { angle: number; radius: number; size: number; color: string }) {
-  const anim = useRef(new RNAnimated.Value(angle)).current;
-  useEffect(() => {
-    RNAnimated.loop(
-      RNAnimated.timing(anim, { toValue: angle + 360, duration: 4000 + radius * 10, useNativeDriver: true })
-    ).start();
-  }, []);
-  const x = anim.interpolate({ inputRange: [angle, angle + 360], outputRange: [0, 0] });
-  return (
-    <RNAnimated.View style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color, top: 90 - radius * Math.sin((angle * Math.PI) / 180), left: 90 - radius * Math.cos((angle * Math.PI) / 180) }]} />
-  );
-}
+const DAILY_TIPS = [
+  { icon: 'water-outline', tip: 'Günde en az 2 litre su içerek cildinizi içeriden nemlendirin.', color: '#3AAFFF' },
+  { icon: 'sunny-outline', tip: 'SPF 50 güneş kremi kullanmayı unutmayın, bulutlu havalarda bile.', color: '#F5B731' },
+  { icon: 'moon-outline', tip: 'Gece bakım rutininiz cilt yenilenmesi için kritik öneme sahiptir.', color: '#A78BFA' },
+  { icon: 'nutrition-outline', tip: 'Antioksidan zengin besinler cilt sağlığını destekler.', color: '#2DD4A8' },
+  { icon: 'fitness-outline', tip: 'Düzenli egzersiz kan dolaşımını artırarak cilde canlılık katar.', color: '#F7856E' },
+];
 
-function FaceMesh() {
+function ScannerVisual() {
   const pulse = useRef(new RNAnimated.Value(1)).current;
   const rotate = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
     RNAnimated.loop(
       RNAnimated.sequence([
-        RNAnimated.timing(pulse, { toValue: 1.06, duration: 1800, useNativeDriver: true }),
-        RNAnimated.timing(pulse, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        RNAnimated.timing(pulse, { toValue: 1.08, duration: 2000, useNativeDriver: true }),
+        RNAnimated.timing(pulse, { toValue: 1, duration: 2000, useNativeDriver: true }),
       ])
     ).start();
     RNAnimated.loop(
-      RNAnimated.timing(rotate, { toValue: 1, duration: 12000, useNativeDriver: true })
+      RNAnimated.timing(rotate, { toValue: 1, duration: 15000, useNativeDriver: true })
     ).start();
   }, []);
 
   const spin = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   return (
-    <View style={fmS.wrap}>
-      {/* Outer ring */}
-      <RNAnimated.View style={[fmS.ring, fmS.ring1, { transform: [{ rotate: spin }] }]}>
-        {[0, 60, 120, 180, 240, 300].map(a => (
-          <View key={a} style={[fmS.ringDot, {
-            top: 75 - 78 * Math.sin((a * Math.PI) / 180) - 4,
-            left: 75 - 78 * Math.cos((a * Math.PI) / 180) - 4,
+    <View style={vizS.wrap}>
+      <RNAnimated.View style={[vizS.outerRing, { transform: [{ rotate: spin }] }]}>
+        {[0, 72, 144, 216, 288].map(a => (
+          <View key={a} style={[vizS.nodeDot, {
+            top: 65 - 68 * Math.sin((a * Math.PI) / 180) - 5,
+            left: 65 - 68 * Math.cos((a * Math.PI) / 180) - 5,
           }]} />
         ))}
       </RNAnimated.View>
-      {/* Middle ring */}
-      <RNAnimated.View style={[fmS.ring, fmS.ring2, { transform: [{ rotate: spin }, { scaleX: -1 }] }]}>
-        {[30, 90, 150, 210, 270, 330].map(a => (
-          <View key={a} style={[fmS.ringDot2, {
-            top: 55 - 55 * Math.sin((a * Math.PI) / 180) - 3,
-            left: 55 - 55 * Math.cos((a * Math.PI) / 180) - 3,
-          }]} />
-        ))}
-      </RNAnimated.View>
-      {/* Core */}
-      <RNAnimated.View style={[fmS.core, { transform: [{ scale: pulse }] }]}>
-        <LinearGradient colors={['#7C3AED', '#4F46E5', '#1D4ED8']} style={fmS.coreGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Ionicons name="scan-outline" size={36} color="rgba(255,255,255,0.9)" />
+
+      <RNAnimated.View style={[vizS.core, { transform: [{ scale: pulse }] }]}>
+        <LinearGradient colors={['#2DD4A8', '#1A9B7A', '#0F7A5C']} style={vizS.coreGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Ionicons name="scan-outline" size={32} color="rgba(240,246,244,0.9)" />
         </LinearGradient>
       </RNAnimated.View>
-      {/* Corner brackets */}
-      <View style={[fmS.bracket, fmS.bTL]} />
-      <View style={[fmS.bracket, fmS.bTR]} />
-      <View style={[fmS.bracket, fmS.bBL]} />
-      <View style={[fmS.bracket, fmS.bBR]} />
+
+      <View style={[vizS.corner, vizS.cTL]} />
+      <View style={[vizS.corner, vizS.cTR]} />
+      <View style={[vizS.corner, vizS.cBL]} />
+      <View style={[vizS.corner, vizS.cBR]} />
     </View>
   );
 }
 
-const fmS = StyleSheet.create({
-  wrap: { width: 180, height: 180, alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', borderRadius: 150 },
-  ring1: { width: 160, height: 160, borderWidth: 1, borderColor: 'rgba(124,58,237,0.35)', borderStyle: 'dashed' },
-  ring2: { width: 120, height: 120, borderWidth: 1, borderColor: 'rgba(99,102,241,0.4)', borderStyle: 'dashed' },
-  ringDot: { position: 'absolute', width: 8, height: 8, borderRadius: 4, backgroundColor: '#7C3AED' },
-  ringDot2: { position: 'absolute', width: 6, height: 6, borderRadius: 3, backgroundColor: '#818CF8' },
-  core: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 20 },
+const vizS = StyleSheet.create({
+  wrap: { width: 150, height: 150, alignItems: 'center', justifyContent: 'center' },
+  outerRing: { position: 'absolute', width: 140, height: 140, borderRadius: 70, borderWidth: 1, borderColor: 'rgba(45,212,168,0.25)', borderStyle: 'dashed' },
+  nodeDot: { position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: '#2DD4A8' },
+  core: { width: 70, height: 70, borderRadius: 35, overflow: 'hidden', shadowColor: '#2DD4A8', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 15 },
   coreGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bracket: { position: 'absolute', width: 20, height: 20, borderColor: '#E5C07B' },
-  bTL: { top: 10, left: 10, borderTopWidth: 2.5, borderLeftWidth: 2.5, borderTopLeftRadius: 6 },
-  bTR: { top: 10, right: 10, borderTopWidth: 2.5, borderRightWidth: 2.5, borderTopRightRadius: 6 },
-  bBL: { bottom: 10, left: 10, borderBottomWidth: 2.5, borderLeftWidth: 2.5, borderBottomLeftRadius: 6 },
-  bBR: { bottom: 10, right: 10, borderBottomWidth: 2.5, borderRightWidth: 2.5, borderBottomRightRadius: 6 },
+  corner: { position: 'absolute', width: 18, height: 18, borderColor: '#F7856E' },
+  cTL: { top: 8, left: 8, borderTopWidth: 2.5, borderLeftWidth: 2.5, borderTopLeftRadius: 5 },
+  cTR: { top: 8, right: 8, borderTopWidth: 2.5, borderRightWidth: 2.5, borderTopRightRadius: 5 },
+  cBL: { bottom: 8, left: 8, borderBottomWidth: 2.5, borderLeftWidth: 2.5, borderBottomLeftRadius: 5 },
+  cBR: { bottom: 8, right: 8, borderBottomWidth: 2.5, borderRightWidth: 2.5, borderBottomRightRadius: 5 },
 });
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
   const [selected, setSelected] = useState<'cerrahi' | 'medikal' | null>(null);
+  const [tipIndex] = useState(Math.floor(Math.random() * DAILY_TIPS.length));
+  const tip = DAILY_TIPS[tipIndex];
 
   const handleStart = () => {
     if (!selected) return;
     router.push({ pathname: '/analysis/camera', params: { category: selected } });
   };
 
+  const isPremium = user?.subscription === 'premium';
+
   return (
     <View style={s.root}>
-      {/* Unique purple-to-black gradient background */}
-      <LinearGradient
-        colors={['#0F0A1E', '#0A0A14', '#06060C']}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      />
-      {/* Purple bloom top */}
-      <View style={s.bloomPurple} />
-      {/* Indigo bloom bottom-right */}
-      <View style={s.bloomIndigo} />
-      {/* Gold accent top-right */}
-      <View style={s.bloomGold} />
+      <LinearGradient colors={['#030A0C', '#050D0F', '#071215']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <View style={s.orbTeal} />
+      <View style={s.orbCoral} />
 
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-          {/* Header */}
           <Animated.View entering={FadeInDown.duration(500)} style={s.header}>
             <View>
-              <Text style={s.hi}>Merhaba 👋</Text>
+              <Text style={s.greeting}>Merhaba</Text>
               <Text style={s.name}>{user?.name || 'Kullanıcı'}</Text>
             </View>
             <Animated.View entering={ZoomIn.delay(300)}>
               <LinearGradient
-                colors={user?.subscription === 'premium'
-                  ? ['rgba(229,192,123,0.22)', 'rgba(229,192,123,0.08)']
-                  : ['rgba(124,58,237,0.15)', 'rgba(124,58,237,0.05)']}
+                colors={isPremium ? ['rgba(45,212,168,0.2)', 'rgba(45,212,168,0.06)'] : ['rgba(247,133,110,0.12)', 'rgba(247,133,110,0.04)']}
                 style={s.badge}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               >
-                <Ionicons name={user?.subscription === 'premium' ? 'diamond' : 'sparkles-outline'} size={13} color={user?.subscription === 'premium' ? '#E5C07B' : '#818CF8'} />
-                <Text style={[s.badgeTxt, user?.subscription === 'premium' && s.badgeTxtPremium]}>
-                  {user?.subscription === 'premium' ? 'Premium' : 'Ücretsiz'}
+                <Ionicons name={isPremium ? 'diamond' : 'leaf-outline'} size={13} color={isPremium ? '#2DD4A8' : '#F7856E'} />
+                <Text style={[s.badgeTxt, isPremium && s.badgePremium]}>
+                  {isPremium ? 'Premium' : 'Ücretsiz'}
                 </Text>
               </LinearGradient>
             </Animated.View>
           </Animated.View>
 
-          {/* Hero — Face mesh scanner */}
-          <Animated.View entering={FadeInDown.delay(80).duration(600)} style={s.heroWrap}>
-            <Image source={require('../../assets/images/hero-bg.png')} style={s.heroBgImage} blurRadius={2} />
+          <Animated.View entering={FadeInDown.delay(100).duration(500)} style={s.tipCard}>
+            <LinearGradient colors={['rgba(45,212,168,0.06)', 'rgba(45,212,168,0.02)']} style={StyleSheet.absoluteFill} borderRadius={20} />
+            <View style={[s.tipIconBox, { backgroundColor: tip.color + '18' }]}>
+              <Ionicons name={tip.icon as any} size={20} color={tip.color} />
+            </View>
+            <View style={s.tipContent}>
+              <Text style={s.tipLabel}>{t('dailyTip')}</Text>
+              <Text style={s.tipText}>{tip.tip}</Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(180).duration(600)} style={s.heroWrap}>
             <LinearGradient
-              colors={['rgba(15,10,30,0.3)', 'rgba(15,10,30,0.6)', 'rgba(6,6,12,0.95)']}
+              colors={['rgba(45,212,168,0.08)', 'rgba(5,13,15,0.95)']}
               style={s.heroGradient}
               start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
             />
-            <FaceMesh />
+            <ScannerVisual />
             <View style={s.heroText}>
               <Text style={s.heroTitle}>AI Yüz Analizi</Text>
-              <Text style={s.heroSub}>Estetik potansiyelini keşfet</Text>
+              <Text style={s.heroSub}>Estetik potansiyelinizi keşfedin</Text>
             </View>
             <View style={s.heroBadgeRow}>
-              {['10+ Metrik', 'Yüz Şekli', 'TL Fiyatlar'].map((b, i) => (
+              {['10+ Metrik', 'Yüz Şekli', 'Fiyat Rehberi'].map((b, i) => (
                 <View key={i} style={s.heroBadge}>
-                  <View style={s.heroBadgeDot} />
+                  <View style={[s.heroBadgeDot, { backgroundColor: i === 1 ? '#F7856E' : '#2DD4A8' }]} />
                   <Text style={s.heroBadgeTxt}>{b}</Text>
                 </View>
               ))}
             </View>
           </Animated.View>
 
-          {/* Section label */}
-          <Animated.View entering={FadeInDown.delay(200).duration(400)} style={s.secRow}>
+          <Animated.View entering={FadeInDown.delay(280).duration(400)} style={s.secRow}>
             <View style={s.secLine} />
             <Text style={s.secLabel}>ANALİZ TÜRÜ</Text>
             <View style={s.secLine} />
           </Animated.View>
 
-          {/* Surgical card */}
-          <Animated.View entering={FadeInDown.delay(260).duration(500)}>
+          <Animated.View entering={FadeInDown.delay(340).duration(500)}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => setSelected('cerrahi')}>
-              <View style={[s.card, selected === 'cerrahi' && s.cardSelGold]}>
+              <View style={[s.card, selected === 'cerrahi' && s.cardSelTeal]}>
                 {selected === 'cerrahi' && (
-                  <LinearGradient colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.04)']} style={StyleSheet.absoluteFill} borderRadius={20} />
+                  <LinearGradient colors={['rgba(45,212,168,0.08)', 'rgba(45,212,168,0.02)']} style={StyleSheet.absoluteFill} borderRadius={22} />
                 )}
-                <LinearGradient colors={['rgba(229,192,123,0.2)', 'rgba(229,192,123,0.06)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="cut-outline" size={26} color="#E5C07B" />
+                <LinearGradient colors={['rgba(45,212,168,0.18)', 'rgba(45,212,168,0.05)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="cut-outline" size={26} color="#2DD4A8" />
                 </LinearGradient>
                 <View style={s.cardBody}>
                   <View style={s.cardTitleRow}>
                     <Text style={s.cardTitle}>Cerrahi Analiz</Text>
                     {selected === 'cerrahi' && (
-                      <View style={s.checkGold}><Ionicons name="checkmark" size={12} color="#000" /></View>
+                      <View style={s.checkTeal}><Ionicons name="checkmark" size={12} color="#050D0F" /></View>
                     )}
                   </View>
                   <Text style={s.cardDesc}>Rinoplasti, çene, göz kapağı ve daha fazlası</Text>
                   <View style={s.tags}>
-                    {['Rinoplasti', 'Mentoplasti', 'Blefaroplasti'].map(t => (
-                      <View key={t} style={s.tagGold}><Text style={s.tagTxtGold}>{t}</Text></View>
+                    {['Rinoplasti', 'Mentoplasti', 'Blefaroplasti'].map(tag => (
+                      <View key={tag} style={s.tagTeal}><Text style={s.tagTxtTeal}>{tag}</Text></View>
                     ))}
                   </View>
                 </View>
@@ -201,27 +183,26 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Medical card */}
-          <Animated.View entering={FadeInDown.delay(320).duration(500)}>
+          <Animated.View entering={FadeInDown.delay(400).duration(500)}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => setSelected('medikal')}>
-              <View style={[s.card, selected === 'medikal' && s.cardSelPurple]}>
+              <View style={[s.card, selected === 'medikal' && s.cardSelCoral]}>
                 {selected === 'medikal' && (
-                  <LinearGradient colors={['rgba(124,58,237,0.12)', 'rgba(124,58,237,0.04)']} style={StyleSheet.absoluteFill} borderRadius={20} />
+                  <LinearGradient colors={['rgba(247,133,110,0.08)', 'rgba(247,133,110,0.02)']} style={StyleSheet.absoluteFill} borderRadius={22} />
                 )}
-                <LinearGradient colors={['rgba(124,58,237,0.22)', 'rgba(99,102,241,0.08)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                  <Ionicons name="sparkles-outline" size={26} color="#818CF8" />
+                <LinearGradient colors={['rgba(247,133,110,0.2)', 'rgba(247,133,110,0.06)']} style={s.iconBox} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <Ionicons name="sparkles-outline" size={26} color="#F7856E" />
                 </LinearGradient>
                 <View style={s.cardBody}>
                   <View style={s.cardTitleRow}>
                     <Text style={s.cardTitle}>Medikal Estetik</Text>
                     {selected === 'medikal' && (
-                      <View style={s.checkPurple}><Ionicons name="checkmark" size={12} color="#fff" /></View>
+                      <View style={s.checkCoral}><Ionicons name="checkmark" size={12} color="#fff" /></View>
                     )}
                   </View>
                   <Text style={s.cardDesc}>Ameliyatsız botoks, dolgu ve lazer tedavileri</Text>
                   <View style={s.tags}>
-                    {['Botoks', 'Dolgu', 'Lazer'].map(t => (
-                      <View key={t} style={s.tagPurple}><Text style={s.tagTxtPurple}>{t}</Text></View>
+                    {['Botoks', 'Dolgu', 'Lazer'].map(tag => (
+                      <View key={tag} style={s.tagCoral}><Text style={s.tagTxtCoral}>{tag}</Text></View>
                     ))}
                   </View>
                 </View>
@@ -229,32 +210,45 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Start button */}
           {selected ? (
             <Animated.View entering={FadeIn.duration(350)} style={s.startWrap}>
               <TouchableOpacity testID="start-analysis-btn" onPress={handleStart} activeOpacity={0.85}>
                 <LinearGradient
-                  colors={selected === 'cerrahi' ? ['#F5E0A0', '#E5C07B', '#C9963A'] : ['#A78BFA', '#7C3AED', '#4F46E5']}
+                  colors={selected === 'cerrahi' ? ['#2DD4A8', '#1A9B7A'] : ['#F7856E', '#E05A42']}
                   style={s.startBtn}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 >
-                  <Ionicons name="scan-outline" size={22} color="#fff" />
+                  <Ionicons name="scan-outline" size={22} color="#050D0F" />
                   <Text style={s.startTxt}>Analizi Başlat</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#fff" />
+                  <Ionicons name="arrow-forward" size={20} color="#050D0F" />
                 </LinearGradient>
               </TouchableOpacity>
             </Animated.View>
           ) : (
-            <Animated.View entering={FadeInDown.delay(400)} style={s.hint}>
-              <Ionicons name="finger-print-outline" size={18} color="rgba(129,140,248,0.5)" />
+            <Animated.View entering={FadeInDown.delay(480)} style={s.hint}>
+              <Ionicons name="finger-print-outline" size={18} color="rgba(45,212,168,0.4)" />
               <Text style={s.hintTxt}>Analiz türü seçin</Text>
             </Animated.View>
           )}
 
-          {/* Disclaimer */}
-          <Animated.View entering={FadeInDown.delay(480)} style={s.disc}>
-            <Ionicons name="shield-checkmark-outline" size={13} color="rgba(129,140,248,0.5)" />
-            <Text style={s.discTxt}>Bu uygulama tıbbi tavsiye niteliği taşımaz. Bir estetik uzmanına danışmanız önerilir.</Text>
+          <Animated.View entering={FadeInDown.delay(540)} style={s.quickActions}>
+            <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/(tabs)/journal')} activeOpacity={0.8}>
+              <LinearGradient colors={['rgba(247,133,110,0.1)', 'rgba(247,133,110,0.03)']} style={s.quickBtnGrad}>
+                <Ionicons name="journal-outline" size={22} color="#F7856E" />
+                <Text style={s.quickBtnTxt}>Cilt Günlüğü</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.quickBtn} onPress={() => router.push('/(tabs)/discover')} activeOpacity={0.8}>
+              <LinearGradient colors={['rgba(45,212,168,0.1)', 'rgba(45,212,168,0.03)']} style={s.quickBtnGrad}>
+                <Ionicons name="compass-outline" size={22} color="#2DD4A8" />
+                <Text style={s.quickBtnTxt}>Prosedür Rehberi</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(600)} style={s.disc}>
+            <Ionicons name="shield-checkmark-outline" size={13} color="rgba(45,212,168,0.4)" />
+            <Text style={s.discTxt}>{t('disclaimer')}</Text>
           </Animated.View>
 
         </ScrollView>
@@ -264,57 +258,66 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#06060C' },
-  bloomPurple: { position: 'absolute', top: -100, left: -80, width: 350, height: 350, borderRadius: 175, backgroundColor: '#7C3AED', opacity: 0.13 },
-  bloomIndigo: { position: 'absolute', bottom: 40, right: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: '#4F46E5', opacity: 0.10 },
-  bloomGold: { position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: '#E5C07B', opacity: 0.07 },
+  root: { flex: 1, backgroundColor: '#050D0F' },
+  orbTeal: { position: 'absolute', top: -100, left: -80, width: 300, height: 300, borderRadius: 150, backgroundColor: '#2DD4A8', opacity: 0.05 },
+  orbCoral: { position: 'absolute', bottom: 60, right: -100, width: 260, height: 260, borderRadius: 130, backgroundColor: '#F7856E', opacity: 0.04 },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
 
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 },
-  hi: { fontSize: 13, color: 'rgba(129,140,248,0.7)', marginBottom: 2 },
-  name: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)' },
-  badgeTxt: { fontSize: 12, fontWeight: '700', color: '#818CF8' },
-  badgeTxtPremium: { color: '#E5C07B' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  greeting: { fontSize: 13, color: '#8BA5A0', marginBottom: 2 },
+  name: { fontSize: 24, fontWeight: '800', color: '#F0F6F4', letterSpacing: -0.3 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(45,212,168,0.15)' },
+  badgeTxt: { fontSize: 12, fontWeight: '700', color: '#F7856E' },
+  badgePremium: { color: '#2DD4A8' },
 
-  heroWrap: { alignItems: 'center', paddingVertical: 24, marginBottom: 24, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
-  heroBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
+  tipCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, marginBottom: 20, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(45,212,168,0.1)', overflow: 'hidden' },
+  tipIconBox: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  tipContent: { flex: 1 },
+  tipLabel: { fontSize: 11, fontWeight: '700', color: '#2DD4A8', letterSpacing: 0.5, marginBottom: 4 },
+  tipText: { fontSize: 13, color: '#8BA5A0', lineHeight: 19 },
+
+  heroWrap: { alignItems: 'center', paddingVertical: 28, marginBottom: 24, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(45,212,168,0.15)', backgroundColor: 'rgba(45,212,168,0.02)' },
   heroGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   heroText: { alignItems: 'center', marginTop: 16, marginBottom: 16 },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  heroSub: { fontSize: 13, color: 'rgba(129,140,248,0.8)', marginTop: 4 },
+  heroTitle: { fontSize: 22, fontWeight: '800', color: '#F0F6F4', letterSpacing: -0.5 },
+  heroSub: { fontSize: 13, color: '#8BA5A0', marginTop: 4 },
   heroBadgeRow: { flexDirection: 'row', gap: 10 },
-  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(124,58,237,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)' },
-  heroBadgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#818CF8' },
-  heroBadgeTxt: { fontSize: 11, color: '#818CF8', fontWeight: '600' },
+  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(45,212,168,0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(45,212,168,0.15)' },
+  heroBadgeDot: { width: 6, height: 6, borderRadius: 3 },
+  heroBadgeTxt: { fontSize: 11, color: '#8BA5A0', fontWeight: '600' },
 
   secRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  secLabel: { fontSize: 10, fontWeight: '700', color: 'rgba(129,140,248,0.5)', letterSpacing: 2 },
-  secLine: { flex: 1, height: 1, backgroundColor: 'rgba(124,58,237,0.15)' },
+  secLabel: { fontSize: 10, fontWeight: '700', color: 'rgba(45,212,168,0.5)', letterSpacing: 2 },
+  secLine: { flex: 1, height: 1, backgroundColor: 'rgba(45,212,168,0.1)' },
 
-  card: { borderRadius: 20, padding: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.03)', overflow: 'hidden' },
-  cardSelGold: { borderColor: 'rgba(229,192,123,0.45)' },
-  cardSelPurple: { borderColor: 'rgba(124,58,237,0.5)' },
-  iconBox: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 16 },
+  card: { borderRadius: 22, padding: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', overflow: 'hidden' },
+  cardSelTeal: { borderColor: 'rgba(45,212,168,0.35)' },
+  cardSelCoral: { borderColor: 'rgba(247,133,110,0.35)' },
+  iconBox: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 16 },
   cardBody: { flex: 1 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
-  checkGold: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#E5C07B', alignItems: 'center', justifyContent: 'center' },
-  checkPurple: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
-  cardDesc: { fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 10, lineHeight: 17 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#F0F6F4' },
+  checkTeal: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#2DD4A8', alignItems: 'center', justifyContent: 'center' },
+  checkCoral: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#F7856E', alignItems: 'center', justifyContent: 'center' },
+  cardDesc: { fontSize: 12, color: '#5A7A74', marginBottom: 10, lineHeight: 17 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tagGold: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(229,192,123,0.12)', borderWidth: 1, borderColor: 'rgba(229,192,123,0.25)' },
-  tagTxtGold: { fontSize: 10, fontWeight: '600', color: '#E5C07B' },
-  tagPurple: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(124,58,237,0.15)', borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
-  tagTxtPurple: { fontSize: 10, fontWeight: '600', color: '#818CF8' },
+  tagTeal: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(45,212,168,0.08)', borderWidth: 1, borderColor: 'rgba(45,212,168,0.2)' },
+  tagTxtTeal: { fontSize: 10, fontWeight: '600', color: '#2DD4A8' },
+  tagCoral: { borderRadius: 99, paddingHorizontal: 9, paddingVertical: 3, backgroundColor: 'rgba(247,133,110,0.08)', borderWidth: 1, borderColor: 'rgba(247,133,110,0.2)' },
+  tagTxtCoral: { fontSize: 10, fontWeight: '600', color: '#F7856E' },
 
   startWrap: { marginTop: 8, marginBottom: 6 },
-  startBtn: { borderRadius: 18, paddingVertical: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  startTxt: { fontSize: 17, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2 },
-  hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10, paddingVertical: 18, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(124,58,237,0.15)', borderStyle: 'dashed' },
-  hintTxt: { fontSize: 14, color: 'rgba(129,140,248,0.5)' },
+  startBtn: { borderRadius: 20, paddingVertical: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  startTxt: { fontSize: 17, fontWeight: '800', color: '#050D0F', letterSpacing: 0.2 },
+  hint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 10, paddingVertical: 18, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(45,212,168,0.1)', borderStyle: 'dashed' },
+  hintTxt: { fontSize: 14, color: 'rgba(45,212,168,0.4)' },
 
-  disc: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 24, backgroundColor: 'rgba(124,58,237,0.05)', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(124,58,237,0.12)' },
-  discTxt: { fontSize: 11, color: 'rgba(129,140,248,0.5)', flex: 1, lineHeight: 17 },
+  quickActions: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  quickBtn: { flex: 1, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  quickBtnGrad: { alignItems: 'center', paddingVertical: 20, gap: 8 },
+  quickBtnTxt: { fontSize: 12, fontWeight: '600', color: '#8BA5A0' },
+
+  disc: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 24, backgroundColor: 'rgba(45,212,168,0.03)', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: 'rgba(45,212,168,0.08)' },
+  discTxt: { fontSize: 11, color: 'rgba(139,165,160,0.6)', flex: 1, lineHeight: 17 },
 });

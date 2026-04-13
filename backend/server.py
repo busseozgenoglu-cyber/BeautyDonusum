@@ -742,6 +742,76 @@ async def get_face_shape_tips(shape: str):
         raise HTTPException(status_code=400, detail=f"Geçersiz yüz şekli. Geçerli değerler: {', '.join(FACE_SHAPES)}")
     return {"face_shape": shape, "tips": FACE_SHAPE_TIPS[shape]}
 
+# ==================== SKIN JOURNAL ====================
+
+class JournalEntry(BaseModel):
+    mood: str
+    routine: list = []
+    water_glasses: int = 0
+    sleep_hours: int = 7
+    notes: str = ""
+
+@api_router.post("/journal/entry")
+async def create_journal_entry(data: JournalEntry, request: Request):
+    user = await get_current_user(request)
+    entry_id = str(uuid.uuid4())
+    doc = {
+        "entry_id": entry_id,
+        "user_id": user["user_id"],
+        "mood": data.mood,
+        "routine": data.routine,
+        "water_glasses": data.water_glasses,
+        "sleep_hours": data.sleep_hours,
+        "notes": data.notes,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.journal_entries.insert_one(doc)
+    return {"entry_id": entry_id, "status": "saved"}
+
+@api_router.get("/journal/entries")
+async def get_journal_entries(request: Request):
+    user = await get_current_user(request)
+    entries = await db.journal_entries.find(
+        {"user_id": user["user_id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(30)
+    return {"entries": entries}
+
+@api_router.get("/journal/stats")
+async def get_journal_stats(request: Request):
+    user = await get_current_user(request)
+    entries = await db.journal_entries.find(
+        {"user_id": user["user_id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(30)
+    total = len(entries)
+    if total == 0:
+        return {"total_entries": 0, "avg_water": 0, "avg_sleep": 0, "streak": 0}
+    avg_water = sum(e.get("water_glasses", 0) for e in entries) / total
+    avg_sleep = sum(e.get("sleep_hours", 0) for e in entries) / total
+    return {
+        "total_entries": total,
+        "avg_water": round(avg_water, 1),
+        "avg_sleep": round(avg_sleep, 1),
+        "streak": total,
+    }
+
+# ==================== DAILY TIPS ====================
+
+DAILY_TIPS = [
+    {"category": "hydration", "tip_tr": "Günde en az 2 litre su içerek cildinizi içeriden nemlendirin.", "tip_en": "Hydrate your skin from within by drinking at least 2 liters of water daily."},
+    {"category": "suncare", "tip_tr": "SPF 50 güneş kremi kullanmayı unutmayın, bulutlu havalarda bile.", "tip_en": "Don't forget to use SPF 50 sunscreen, even on cloudy days."},
+    {"category": "sleep", "tip_tr": "Gece bakım rutininiz cilt yenilenmesi için kritik öneme sahiptir.", "tip_en": "Your nighttime skincare routine is critical for skin regeneration."},
+    {"category": "nutrition", "tip_tr": "Antioksidan zengin besinler cilt sağlığını destekler.", "tip_en": "Antioxidant-rich foods support skin health."},
+    {"category": "exercise", "tip_tr": "Düzenli egzersiz kan dolaşımını artırarak cilde canlılık katar.", "tip_en": "Regular exercise increases blood circulation, adding vitality to the skin."},
+    {"category": "cleansing", "tip_tr": "Yüzünüzü günde iki kez yumuşak bir temizleyici ile yıkayın.", "tip_en": "Wash your face twice daily with a gentle cleanser."},
+    {"category": "moisturizing", "tip_tr": "Cildinizi her gün nemlendirin, yağlı cilt tiplerinde bile.", "tip_en": "Moisturize your skin daily, even with oily skin types."},
+]
+
+@api_router.get("/daily-tip")
+async def get_daily_tip():
+    day_of_year = datetime.now(timezone.utc).timetuple().tm_yday
+    tip = DAILY_TIPS[day_of_year % len(DAILY_TIPS)]
+    return {"tip": tip}
+
 # ==================== HEALTH ====================
 
 @api_router.get("/health")

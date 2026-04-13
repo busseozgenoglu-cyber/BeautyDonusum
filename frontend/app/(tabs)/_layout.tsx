@@ -8,8 +8,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.bar,
-        tabBarActiveTintColor: '#E5C07B',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.3)',
+        tabBarActiveTintColor: '#2DD4A8',
+        tabBarInactiveTintColor: 'rgba(240,246,244,0.25)',
         tabBarLabelStyle: styles.label,
         tabBarBackground: () => (
           <View style={styles.barBg} />
@@ -20,7 +20,7 @@ export default function TabLayout() {
         name="home"
         options={{
           title: 'Ana Sayfa',
-          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="leaf" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -28,6 +28,13 @@ export default function TabLayout() {
         options={{
           title: 'Keşfet',
           tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="journal"
+        options={{
+          title: 'Günlük',
+          tabBarIcon: ({ color, size }) => <Ionicons name="journal-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -51,7 +58,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.15)',
+    borderTopColor: 'rgba(45,212,168,0.1)',
     borderTopWidth: 1,
     height: 85,
     paddingBottom: 25,
@@ -60,7 +67,7 @@ const styles = StyleSheet.create({
   },
   barBg: {
     flex: 1,
-    backgroundColor: '#0E0B06',
+    backgroundColor: '#040B0D',
   },
-  label: { fontSize: 11, fontWeight: '600' },
+  label: { fontSize: 10, fontWeight: '600', letterSpacing: 0.3 },
 });

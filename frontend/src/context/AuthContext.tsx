@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       deviceId = 'device_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
       await SecureStore.setItemAsync('device_id', deviceId);
     }
-    const email = `${deviceId}@faceglowpro.app`;
+    const email = `${deviceId}@yuzatolyem.app`;
     const password = deviceId;
 
     // Login dene

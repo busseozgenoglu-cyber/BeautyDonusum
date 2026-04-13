@@ -14,13 +14,15 @@ export default function RootLayout() {
     <LanguageProvider>
       <AuthProvider>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' }, animation: 'fade' }}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#050D0F' }, animation: 'fade' }}>
           <Stack.Screen name="index" />
+          <Stack.Screen name="onboarding" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="analysis/camera" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="analysis/loading" options={{ animation: 'fade', gestureEnabled: false }} />
           <Stack.Screen name="analysis/results" options={{ animation: 'slide_from_right' }} />
+          <Stack.Screen name="journal/entry" options={{ animation: 'slide_from_bottom' }} />
         </Stack>
       </AuthProvider>
     </LanguageProvider>
