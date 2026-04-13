@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLang } from '../../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
+import { COLORS, FONT, SPACING, RADIUS, SHADOWS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -72,7 +72,7 @@ function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
         <Text style={rStyles.title}>{rec.title}</Text>
         {hasCost && (
           <View style={rStyles.costBadge}>
-            <Ionicons name="cash-outline" size={12} color="#E5C07B" />
+            <Ionicons name="cash-outline" size={12} color={COLORS.brand.secondary} />
             <Text style={rStyles.costText}>
               {(rec.cost_min_tl / 1000).toFixed(0)}K–{(rec.cost_max_tl / 1000).toFixed(0)}K ₺
             </Text>
@@ -110,8 +110,8 @@ const rStyles = StyleSheet.create({
   area: { ...FONT.xs, color: COLORS.text.tertiary },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 10 },
   title: { ...FONT.h4, color: COLORS.text.primary, flex: 1 },
-  costBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(229,192,123,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(229,192,123,0.25)' },
-  costText: { fontSize: 11, fontWeight: '700', color: '#E5C07B' },
+  costBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(201,162,39,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(201,162,39,0.28)' },
+  costText: { fontSize: 11, fontWeight: '700', color: COLORS.brand.secondary },
   desc: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20, marginBottom: 6 },
   reason: { ...FONT.xs, color: COLORS.text.tertiary, fontStyle: 'italic', marginBottom: 10 },
   improvRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
@@ -211,7 +211,7 @@ export default function ResultsScreen() {
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={['#0A0A0A', '#0D0D0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#F4F6F8', '#E8EEF0', '#F4F6F8']} style={StyleSheet.absoluteFill} />
       <View style={styles.glowTop} />
 
       <SafeAreaView style={styles.safeArea}>
@@ -229,7 +229,7 @@ export default function ResultsScreen() {
           {/* Score Card */}
           <Animated.View entering={FadeInDown.duration(400)} style={styles.scoreCardOuter}>
             <LinearGradient
-              colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.02)', 'transparent']}
+              colors={['rgba(13,92,94,0.08)', 'rgba(201,162,39,0.06)', 'transparent']}
               style={styles.scoreCard}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             >
@@ -242,7 +242,7 @@ export default function ResultsScreen() {
                   </View>
                 </View>
                 <View style={styles.scoreRing}>
-                  <LinearGradient colors={['#F5E0A0', '#C9963A']} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <LinearGradient colors={[...COLORS.gradient.teal]} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Text style={styles.scoreRingText}>{displayScore.toFixed(1)}</Text>
                   </LinearGradient>
                 </View>
@@ -250,7 +250,7 @@ export default function ResultsScreen() {
               <View style={styles.catBadge}>
                 <Ionicons
                   name={analysis?.category === 'cerrahi' ? 'cut-outline' : 'sparkles-outline'}
-                  size={14} color={COLORS.brand.primary}
+                  size={14} color={COLORS.brand.accent}
                 />
                 <Text style={styles.catText}>
                   {analysis?.category === 'cerrahi' ? t('surgical') : t('medicalAesthetic')}
@@ -275,8 +275,8 @@ export default function ResultsScreen() {
               <Text style={styles.sectionTitle}>Yüz Şekli Analizi</Text>
               <View style={styles.faceShapeCard}>
                 <View style={styles.faceShapeHeader}>
-                  <LinearGradient colors={['rgba(229,192,123,0.25)', 'rgba(229,192,123,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name="scan-outline" size={22} color="#E5C07B" />
+                  <LinearGradient colors={['rgba(13,92,94,0.15)', 'rgba(13,92,94,0.05)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name="scan-outline" size={22} color={COLORS.brand.primary} />
                   </LinearGradient>
                   <View style={styles.faceShapeMeta}>
                     <Text style={styles.faceShapeName}>{recs.face_shape.charAt(0).toUpperCase() + recs.face_shape.slice(1)} Yüz</Text>
@@ -285,7 +285,7 @@ export default function ResultsScreen() {
                 </View>
                 {recs.face_shape_tips?.makeup ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Makyaj</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.makeup}</Text>
@@ -294,7 +294,7 @@ export default function ResultsScreen() {
                 ) : null}
                 {recs.face_shape_tips?.hair ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Saç</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.hair}</Text>
@@ -303,7 +303,7 @@ export default function ResultsScreen() {
                 ) : null}
                 {recs.face_shape_tips?.glasses ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color={COLORS.brand.primary} /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Gözlük</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.glasses}</Text>
@@ -368,7 +368,7 @@ export default function ResultsScreen() {
                   </View>
                 ) : (
                   <LinearGradient
-                    colors={isPremium ? ['rgba(229,192,123,0.1)', 'rgba(229,192,123,0.03)'] : ['rgba(255,255,255,0.03)', 'transparent']}
+                    colors={isPremium ? ['rgba(13,92,94,0.1)', 'rgba(13,92,94,0.02)'] : ['rgba(15,23,42,0.04)', 'transparent']}
                     style={styles.transformPlaceholderInner}
                   >
                     <Ionicons
@@ -414,26 +414,26 @@ export default function ResultsScreen() {
               </TouchableOpacity>
 
               <LinearGradient
-                colors={['rgba(229,192,123,0.18)', 'rgba(229,192,123,0.04)', 'transparent']}
+                colors={['rgba(13,92,94,0.2)', 'rgba(30,58,95,0.08)', 'transparent']}
                 style={styles.paywallTopGlow}
               />
 
               {/* Free Trial Badge */}
               <View style={styles.trialBadge}>
-                <LinearGradient colors={['#2A1F00', '#1A1200']} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="gift-outline" size={13} color="#F5C842" />
+                <LinearGradient colors={[...COLORS.gradient.navy]} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                  <Ionicons name="gift-outline" size={13} color={COLORS.brand.secondary} />
                   <Text style={styles.trialBadgeText}>7 GÜN ÜCRETSİZ DENEME</Text>
                 </LinearGradient>
               </View>
 
               {/* Icon */}
               <View style={styles.paywallIconWrap}>
-                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={styles.paywallIconGrad}>
-                  <Ionicons name="diamond" size={30} color="#0A0700" />
+                <LinearGradient colors={[...COLORS.gradient.gold]} style={styles.paywallIconGrad}>
+                  <Ionicons name="ribbon" size={28} color="#1A1200" />
                 </LinearGradient>
               </View>
 
-              <Text style={styles.paywallTitle}>Premium'a Geç</Text>
+              <Text style={styles.paywallTitle}>Premium&apos;a Geç</Text>
               <Text style={styles.paywallSubtitle}>
                 Uzman cerrah seviyesinde AI analiz
               </Text>
@@ -490,7 +490,7 @@ export default function ResultsScreen() {
                 ].map((f, i) => (
                   <View key={i} style={styles.featureItem}>
                     <LinearGradient
-                      colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.04)']}
+                      colors={['rgba(13,92,94,0.18)', 'rgba(13,92,94,0.06)']}
                       style={styles.featureIconBox}
                     >
                       <Ionicons name={f.icon as any} size={18} color={COLORS.brand.primary} />
@@ -507,7 +507,7 @@ export default function ResultsScreen() {
               {/* Pricing */}
               <View style={styles.pricingBox}>
                 <LinearGradient
-                  colors={['rgba(229,192,123,0.08)', 'rgba(229,192,123,0.02)']}
+                  colors={['rgba(201,162,39,0.12)', 'rgba(13,92,94,0.06)']}
                   style={styles.pricingGrad}
                 >
                   <View style={styles.pricingRow}>
@@ -531,16 +531,16 @@ export default function ResultsScreen() {
                 disabled={purchasing}
               >
                 <LinearGradient
-                  colors={['#F8ECC0', '#E5C07B', '#C08A28']}
+                  colors={[...COLORS.gradient.teal]}
                   style={styles.paywallBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
                   {purchasing ? (
-                    <ActivityIndicator size="small" color="#0A0700" />
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <>
-                      <Ionicons name="diamond" size={18} color="#0A0700" />
+                      <Ionicons name="star" size={18} color="#fff" />
                       <Text style={styles.paywallBtnText}>7 Gün Ücretsiz Başla</Text>
                     </>
                   )}
@@ -592,19 +592,19 @@ const styles = StyleSheet.create({
   glowTop: {
     position: 'absolute', top: -80, right: -80,
     width: 300, height: 300, borderRadius: 150,
-    backgroundColor: 'rgba(229,192,123,0.06)',
+    backgroundColor: 'rgba(13,92,94,0.08)',
   },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg, paddingVertical: 14,
   },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: COLORS.surface.elevated, borderWidth: 1, borderColor: COLORS.border.subtle },
   headerTitle: { ...FONT.h4, color: COLORS.text.primary },
   scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 48 },
 
   // Score
-  scoreCardOuter: { borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)' },
+  scoreCardOuter: { borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: COLORS.border.strong, ...SHADOWS.card },
   scoreCard: { padding: 24 },
   scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   scoreLabel: { ...FONT.small, color: COLORS.text.secondary, marginBottom: 4 },
@@ -613,21 +613,21 @@ const styles = StyleSheet.create({
   scoreMax: { ...FONT.h3, color: COLORS.text.tertiary },
   scoreRing: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden' },
   scoreRingFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scoreRingText: { fontSize: 22, fontWeight: '800', color: '#0A0700' },
+  scoreRingText: { fontSize: 22, fontWeight: '800', color: COLORS.text.inverse },
   catBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: RADIUS.full, backgroundColor: 'rgba(229,192,123,0.08)',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)',
+    borderRadius: RADIUS.full, backgroundColor: 'rgba(13,92,94,0.08)',
+    borderWidth: 1, borderColor: 'rgba(13,92,94,0.2)',
   },
-  catText: { ...FONT.xs, color: COLORS.brand.primary, fontWeight: '600' },
+  catText: { ...FONT.xs, color: COLORS.brand.accent, fontWeight: '600' },
 
   // Summary
   summaryCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
     backgroundColor: COLORS.surface.card, borderRadius: RADIUS.lg,
     padding: 16, marginBottom: 20,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1, borderColor: COLORS.border.subtle, ...SHADOWS.card,
   },
   summaryIcon: { marginTop: 1 },
   summaryText: { ...FONT.small, color: COLORS.text.secondary, flex: 1, lineHeight: 22 },
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...FONT.h4, color: COLORS.text.primary, marginBottom: 14 },
   metricsCard: {
     backgroundColor: COLORS.surface.card, borderRadius: RADIUS.xl,
-    padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    padding: 20, borderWidth: 1, borderColor: COLORS.border.subtle, ...SHADOWS.card,
   },
 
   // Transform
@@ -646,10 +646,10 @@ const styles = StyleSheet.create({
   simBadge: {
     position: 'absolute', bottom: 14, left: 14,
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(0,0,0,0.75)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(15,23,42,0.85)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.full,
   },
-  simText: { ...FONT.xs, color: COLORS.brand.primary, fontWeight: '600' },
-  transformPlaceholder: { borderRadius: RADIUS.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.07)', borderStyle: 'dashed' },
+  simText: { ...FONT.xs, color: COLORS.brand.secondary, fontWeight: '600' },
+  transformPlaceholder: { borderRadius: RADIUS.xl, overflow: 'hidden', borderWidth: 1.5, borderColor: COLORS.border.strong, borderStyle: 'dashed' },
   transformPlaceholderInner: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 },
   transformPlaceholderText: { ...FONT.body, color: COLORS.text.secondary, fontWeight: '500' },
   transformSubText: { ...FONT.small, color: COLORS.text.tertiary },
@@ -663,18 +663,18 @@ const styles = StyleSheet.create({
   // Paywall
   paywallOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.92)',
+    backgroundColor: 'rgba(15,23,42,0.88)',
     justifyContent: 'flex-end',
   },
   paywallScroll: { flexGrow: 1, justifyContent: 'flex-end' },
   paywallCard: {
-    backgroundColor: '#111111',
+    backgroundColor: '#0F172A',
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
     borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
     paddingHorizontal: 24, paddingTop: 12, paddingBottom: 40,
     alignItems: 'center',
     borderWidth: 1, borderBottomWidth: 0,
-    borderColor: 'rgba(229,192,123,0.2)', overflow: 'hidden',
+    borderColor: 'rgba(13,92,94,0.35)', overflow: 'hidden',
   },
   paywallClose: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20 },
   paywallTopGlow: {
@@ -686,14 +686,14 @@ const styles = StyleSheet.create({
   trialBadgeGrad: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 6,
-    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,200,66,0.35)',
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(201,162,39,0.45)',
   },
-  trialBadgeText: { fontSize: 11, fontWeight: '800', color: '#F5C842', letterSpacing: 1.2 },
+  trialBadgeText: { fontSize: 11, fontWeight: '800', color: COLORS.brand.secondary, letterSpacing: 1.2 },
   paywallIconWrap: { width: 68, height: 68, borderRadius: 20, overflow: 'hidden', marginBottom: 14 },
   paywallIconGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  paywallTitle: { fontSize: 26, fontWeight: '800', color: COLORS.text.primary, marginBottom: 4, textAlign: 'center', letterSpacing: -0.5 },
-  paywallSubtitle: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '600', marginBottom: 10, textAlign: 'center' },
-  paywallDesc: { ...FONT.small, color: COLORS.text.secondary, textAlign: 'center', lineHeight: 22, marginBottom: 18, paddingHorizontal: 8 },
+  paywallTitle: { fontSize: 26, fontWeight: '800', color: '#F8FAFC', marginBottom: 4, textAlign: 'center', letterSpacing: -0.5 },
+  paywallSubtitle: { ...FONT.small, color: COLORS.brand.secondary, fontWeight: '600', marginBottom: 10, textAlign: 'center' },
+  paywallDesc: { ...FONT.small, color: '#94A3B8', textAlign: 'center', lineHeight: 22, marginBottom: 18, paddingHorizontal: 8 },
   // Social proof
   socialProof: {
     flexDirection: 'row', alignItems: 'center',
@@ -703,8 +703,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   socialItem: { flex: 1, alignItems: 'center' },
-  socialNum: { fontSize: 17, fontWeight: '800', color: COLORS.brand.primary },
-  socialLabel: { ...FONT.xs, color: COLORS.text.tertiary, marginTop: 2 },
+  socialNum: { fontSize: 17, fontWeight: '800', color: COLORS.brand.secondary },
+  socialLabel: { ...FONT.xs, color: '#64748B', marginTop: 2 },
   socialDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.08)' },
   // Features
   featureGrid: { width: '100%', gap: 10, marginBottom: 20 },
@@ -712,28 +712,28 @@ const styles = StyleSheet.create({
   featureIconBox: {
     width: 38, height: 38, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.18)',
+    borderWidth: 1, borderColor: 'rgba(13,92,94,0.35)',
   },
   featureTextWrap: { flex: 1 },
-  featureTitle: { ...FONT.small, color: COLORS.text.primary, fontWeight: '600' },
-  featureDesc: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 1, lineHeight: 15 },
+  featureTitle: { ...FONT.small, color: '#F1F5F9', fontWeight: '600' },
+  featureDesc: { fontSize: 11, color: '#94A3B8', marginTop: 1, lineHeight: 15 },
   // Pricing
-  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(13,92,94,0.4)' },
   pricingGrad: { paddingVertical: 14, paddingHorizontal: 18 },
   pricingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pricingFree: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
-  pricingAfter: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 2 },
+  pricingFree: { ...FONT.small, color: COLORS.brand.secondary, fontWeight: '700' },
+  pricingAfter: { fontSize: 11, color: '#64748B', marginTop: 2 },
   pricingRight: { alignItems: 'flex-end' },
-  pricingNow: { fontSize: 22, fontWeight: '800', color: COLORS.brand.primary },
+  pricingNow: { fontSize: 22, fontWeight: '800', color: '#F8FAFC' },
   // Button
   paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 12 },
   paywallBtn: { paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  paywallBtnText: { fontSize: 17, color: '#0A0700', fontWeight: '800', letterSpacing: -0.2 },
-  paywallNote: { ...FONT.xs, color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
+  paywallBtnText: { fontSize: 17, color: '#FFFFFF', fontWeight: '800', letterSpacing: -0.2 },
+  paywallNote: { ...FONT.xs, color: '#64748B', textAlign: 'center', lineHeight: 18, marginBottom: 16 },
   // Trust
   trustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  trustText: { fontSize: 11, color: COLORS.text.tertiary },
+  trustText: { fontSize: 11, color: '#64748B' },
   devBypass: {
     marginTop: 12, paddingVertical: 8, paddingHorizontal: 20,
     borderRadius: 10, backgroundColor: 'rgba(255,100,100,0.12)',
@@ -742,15 +742,15 @@ const styles = StyleSheet.create({
   devBypassText: { fontSize: 12, color: '#FF6464', fontWeight: '700' },
 
   // Face Shape Card
-  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  faceShapeCard: { backgroundColor: COLORS.surface.card, borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: COLORS.border.strong, ...SHADOWS.card },
   faceShapeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 16 },
   faceShapeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   faceShapeMeta: { flex: 1 },
-  faceShapeName: { fontSize: 17, fontWeight: '700', color: '#E5C07B', marginBottom: 4 },
+  faceShapeName: { fontSize: 17, fontWeight: '700', color: COLORS.brand.primary, marginBottom: 4 },
   faceShapeDesc: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
   faceShapeTipRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(229,192,123,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(13,92,94,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   faceShapeTipContent: { flex: 1 },
-  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: '#E5C07B', letterSpacing: 0.5, marginBottom: 3 },
+  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: COLORS.brand.accent, letterSpacing: 0.5, marginBottom: 3 },
   faceShapeTipText: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
 });

@@ -13,8 +13,8 @@ export default function RootLayout() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' }, animation: 'fade' }}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F4F6F8' }, animation: 'fade' }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="(tabs)" />

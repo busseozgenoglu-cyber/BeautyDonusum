@@ -159,6 +159,201 @@ class SubscriptionActivate(BaseModel):
 class LanguagePref(BaseModel):
     language: str
 
+# ==================== EDUCATION & CONSENT (unique app content) ====================
+
+EDUCATION_TOPICS = [
+    {
+        "id": "ai_how_it_works",
+        "read_minutes": 3,
+        "title_tr": "AI analizi nasıl çalışır?",
+        "title_en": "How does the AI analysis work?",
+        "summary_tr": "Metriklerin fotoğraftan nasıl çıkarıldığını ve sınırlarını öğrenin.",
+        "summary_en": "Learn how metrics are derived from a photo and what the limits are.",
+        "body_tr": (
+            "Visage Clinic Anteprima, yüz fotoğrafınızdan yapısal oranlar için sayısal metrikler üretir. "
+            "Bu metrikler bilgilendirme amaçlıdır; klinik ölçüm veya tanı yerine geçmez. "
+            "Işık, açı, makyaj ve kamera kalitesi sonuçları etkileyebilir. "
+            "Öneriler, metriklerinize ve seçtiğiniz kategoriye göre kişiselleştirilmiş eğitim içeriğidir; "
+            "mutlaka bir hekim veya estetik uzmanıyla yüz yüze değerlendirme yapılmalıdır."
+        ),
+        "body_en": (
+            "Visage Clinic Anteprima derives numeric metrics for structural proportions from your face photo. "
+            "These metrics are informational only; they are not a clinical measurement or diagnosis. "
+            "Lighting, angle, makeup, and camera quality can affect results. "
+            "Recommendations are personalized educational guidance based on your metrics and category; "
+            "you should always seek an in-person evaluation with a qualified professional."
+        ),
+    },
+    {
+        "id": "surgical_vs_medical",
+        "read_minutes": 4,
+        "title_tr": "Cerrahi ve medikal estetik farkı",
+        "title_en": "Surgical vs. medical aesthetics",
+        "summary_tr": "İki kategori arasındaki beklenti ve iyileşme farkları.",
+        "summary_en": "Expectations and recovery differences between the two paths.",
+        "body_tr": (
+            "Cerrahi seçenekler genellikle kalıcı veya uzun süreli yapısal değişiklik hedefler; "
+            "iyileşme süresi ve risk profili daha yüksek olabilir. "
+            "Medikal estetik uygulamalar çoğunlukla minimal invazivdir, etkileri sınırlı sürelidir ve "
+            "tekrarlanabilir. Uygulama içindeki fiyat aralıkları Türkiye piyasası için yaklaşık ortalamadır; "
+            "kesin plan ve ücret için mutlaka klinik onayı alınmalıdır."
+        ),
+        "body_en": (
+            "Surgical options usually aim for longer-lasting structural change; recovery and risk profiles can be higher. "
+            "Medical aesthetic treatments are often minimally invasive, time-limited, and repeatable. "
+            "In-app price ranges are approximate market averages for Turkey; always confirm plans and fees with your clinic."
+        ),
+    },
+    {
+        "id": "consult_prep",
+        "read_minutes": 3,
+        "title_tr": "Konsültasyon öncesi hazırlık",
+        "title_en": "Preparing for a consultation",
+        "summary_tr": "Klinik görüşmenizden en iyi verimi almak için pratik bir kontrol listesi.",
+        "summary_en": "A practical checklist to get the most from your clinic visit.",
+        "body_tr": (
+            "Hedeflerinizi üç madde halinde yazın; endişelerinizi ve kullandığınız ilaçları not edin. "
+            "Önceki operasyon veya enjeksiyon geçmişinizi hazır bulundurun. "
+            "Uygulamadaki raporu PDF olarak paylaşmayı unutmayın (Profil > Konsültasyon özeti). "
+            "Fotoğraflarınızı doğal ışıkta, düz açıdan çekmeniz analiz tutarlılığına yardımcı olur."
+        ),
+        "body_en": (
+            "Write three bullet goals; note concerns and medications. "
+            "Bring prior surgery or injection history. "
+            "Export your in-app report as a PDF from Profile > Consultation summary. "
+            "For consistency, prefer natural light and a straight-on photo angle."
+        ),
+    },
+    {
+        "id": "simulation_limits",
+        "read_minutes": 2,
+        "title_tr": "Simülasyonların sınırları",
+        "title_en": "Limits of simulations",
+        "summary_tr": "AI önce/sonra görselleri neleri gösterebilir, neleri gösteremez?",
+        "summary_en": "What AI before/after images can and cannot represent.",
+        "body_tr": (
+            "Premium simülasyonlar eğitim ve motivasyon içindir; cerrahi sonucun garantisi veya tıbbi vaat değildir. "
+            "Ten rengi, doku ve aydınlatma gerçek hayatta farklılık gösterebilir. "
+            "Kararınızı yalnızca uzman muayenesi ve onaylı tedavi planına dayandırın."
+        ),
+        "body_en": (
+            "Premium simulations are for education and visualization; they are not a guarantee of surgical outcomes. "
+            "Skin tone, texture, and lighting can differ in real life. "
+            "Base decisions on in-person evaluation and an approved treatment plan."
+        ),
+    },
+]
+
+CLIP_CONSENT_TR = """VISAGE Clinic Anteprima — AI ve veri kullanımı
+
+• Fotoğrafınız analiz ve (Premium’da) simülasyon için işlenir.
+• Sonuçlar bilgilendirme amaçlıdır; tıbbi teşhis veya tedavi önerisi değildir.
+• Verileriniz hesabınızla ilişkilendirilir; güvenli bağlantı üzerinden iletilir.
+• Hesabınızı sildiğinizde veya talep ettiğinizde silme süreçleri gizlilik politikanıza tabidir.
+
+Devam ederek bu bilgilendirmeyi okuduğunuzu kabul etmiş olursunuz."""
+
+CLIP_CONSENT_EN = """VISAGE Clinic Anteprima — AI and data use
+
+• Your photo is processed for analysis and (with Premium) simulation.
+• Results are informational; they are not medical diagnosis or treatment.
+• Data is associated with your account and transmitted over secure connections.
+• Deletion timelines follow your privacy policy when you delete your account or request erasure.
+
+By continuing, you acknowledge this notice."""
+
+
+def _checklist_fallback(lang: str, face_shape: str) -> dict:
+    shape_tr = {"oval": "oval", "kalp": "kalp", "kare": "kare", "yuvarlak": "yuvarlak", "elmas": "elmas", "dikdörtgen": "dikdörtgen"}.get(face_shape, face_shape)
+    if lang == "en":
+        return {
+            "title": "Consultation preparation",
+            "intro": f"Your last analysis suggests focusing questions for your visit. Face shape context: {face_shape}.",
+            "sections": [
+                {"heading": "Goals", "items": [
+                    "Name 1–3 outcomes you want (e.g., profile balance, skin texture, symmetry).",
+                    "Note what you do not want changed.",
+                ]},
+                {"heading": "Health & history", "items": [
+                    "List medications, allergies, and prior facial procedures.",
+                    "Mention smoking or recent dental work if relevant.",
+                ]},
+                {"heading": "Questions for the clinician", "items": [
+                    "What options fit my metrics and recovery capacity?",
+                    "What are realistic timelines and follow-up visits?",
+                ]},
+            ],
+            "disclaimer": "This checklist is educational only and does not replace medical advice.",
+        }
+    return {
+        "title": "Konsültasyon hazırlığı",
+        "intro": f"Son analizinize göre görüşmede kullanabileceğiniz çerçeve. Yüz şekli bağlamı: {shape_tr}.",
+        "sections": [
+            {"heading": "Hedefler", "items": [
+                "İstediğiniz 1–3 sonucu yazın (ör. profil dengesi, cilt dokusu, simetri).",
+                "Değiştirilmesini istemediğiniz bölgeleri belirtin.",
+            ]},
+            {"heading": "Sağlık ve geçmiş", "items": [
+                "İlaçlar, alerjiler ve daha önceki yüz işlemlerini listeleyin.",
+                "Varsa sigara kullanımı veya yakın zamandaki diş işlemlerini belirtin.",
+            ]},
+            {"heading": "Hekime sorulacaklar", "items": [
+                "Metriklerime ve yaşam tarzıma hangi seçenekler uygun?",
+                "İyileşme süresi ve kontrol planı nasıl olur?",
+            ]},
+        ],
+        "disclaimer": "Bu liste yalnızca eğitim amaçlıdır; tıbbi tavsiye yerine geçmez.",
+    }
+
+
+async def generate_consultation_checklist(metrics: dict, recs: Optional[dict], lang: str) -> dict:
+    face_shape = (metrics or {}).get("face_shape") or detect_face_shape_from_metrics(metrics or {})
+    if not (OPENAI_API_KEY or EMERGENT_LLM_KEY):
+        return _checklist_fallback(lang, face_shape)
+    api_key = OPENAI_API_KEY or EMERGENT_LLM_KEY
+    rec_lines = ""
+    if recs and recs.get("recommendations"):
+        for r in recs["recommendations"][:6]:
+            rec_lines += f"- {r.get('title', '')}: {r.get('area', '')}\n"
+    lang_name = "English" if lang == "en" else "Turkish"
+    system_msg = f"""You are a clinical communication assistant. Produce a JSON-only consultation prep checklist for a cosmetic aesthetics visit.
+Language: {lang_name}
+Return ONLY valid JSON with this shape:
+{{"title":"string","intro":"string","sections":[{{"heading":"string","items":["string",...]}}],"disclaimer":"string"}}
+Use 3–4 sections, 2–3 items each. Be practical and non-prescriptive (no dosages, no guarantees)."""
+    user_msg = f"""Face metrics (0-1): {json.dumps({k: v for k, v in (metrics or {}).items() if k != 'face_shape' and isinstance(v, (int, float))}, ensure_ascii=False)}
+Face shape: {face_shape}
+Prior recommendation titles:
+{rec_lines or '(none)'}
+"""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=35) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "max_tokens": 700,
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": user_msg},
+                    ],
+                },
+            )
+        content = resp.json()["choices"][0]["message"]["content"].strip()
+        if content.startswith("```"):
+            content = "\n".join(content.split("\n")[1:-1])
+            if content.startswith("json"):
+                content = content[4:].strip()
+        data = json.loads(content)
+        if not isinstance(data.get("sections"), list):
+            raise ValueError("invalid sections")
+        return data
+    except Exception as e:
+        logger.error(f"consultation checklist LLM error: {e}")
+        return _checklist_fallback(lang, face_shape)
+
 # ==================== AUTH ENDPOINTS ====================
 
 @api_router.post("/auth/register")
@@ -586,6 +781,55 @@ async def get_analysis_full(analysis_id: str, request: Request):
     if not analysis:
         raise HTTPException(status_code=404, detail="Analiz bulunamadı")
     return analysis
+
+
+@api_router.get("/education/topics")
+async def list_education_topics():
+    """Özgün eğitim içeriği: konu başlıkları ve özetler."""
+    return {
+        "topics": [
+            {
+                "id": t["id"],
+                "read_minutes": t["read_minutes"],
+                "title_tr": t["title_tr"],
+                "title_en": t["title_en"],
+                "summary_tr": t["summary_tr"],
+                "summary_en": t["summary_en"],
+            }
+            for t in EDUCATION_TOPICS
+        ]
+    }
+
+
+@api_router.get("/education/topics/{topic_id}")
+async def get_education_topic(topic_id: str):
+    for t in EDUCATION_TOPICS:
+        if t["id"] == topic_id:
+            return {"topic": t}
+    raise HTTPException(status_code=404, detail="Konu bulunamadı")
+
+
+@api_router.get("/consent/clip-text")
+async def get_clip_consent_text(lang: str = "tr"):
+    if lang not in ("tr", "en"):
+        raise HTTPException(status_code=400, detail="lang must be tr or en")
+    return {"lang": lang, "text": CLIP_CONSENT_TR if lang == "tr" else CLIP_CONSENT_EN}
+
+
+@api_router.get("/analysis/{analysis_id}/consult-checklist")
+async def get_consult_checklist(analysis_id: str, request: Request):
+    """Son analize göre kişiselleştirilmiş konsültasyon hazırlık listesi."""
+    user = await get_current_user(request)
+    analysis = await db.analyses.find_one({"analysis_id": analysis_id, "user_id": user["user_id"]}, {"_id": 0, "full_photo": 0, "transformation_base64": 0})
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analiz bulunamadı")
+    lang = (user.get("language") or "tr").lower()
+    if lang not in ("tr", "en"):
+        lang = "tr"
+    metrics = analysis.get("metrics") or {}
+    recs = analysis.get("recommendations")
+    checklist = await generate_consultation_checklist(metrics, recs, lang)
+    return {"analysis_id": analysis_id, "language": lang, "checklist": checklist}
 
 # ==================== SUBSCRIPTION ====================
 

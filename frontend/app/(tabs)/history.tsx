@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useLang } from '../../src/context/LanguageContext';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
+import { COLORS, FONT, SPACING, RADIUS, SHADOWS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../src/utils/api';
 
@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg.primary },
   title: { ...FONT.h2, color: COLORS.text.primary, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.md },
   list: { paddingHorizontal: SPACING.lg, paddingBottom: 20 },
-  card: { backgroundColor: COLORS.surface.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: 12, borderWidth: 1, borderColor: COLORS.surface.glassBorder },
+  card: { backgroundColor: COLORS.surface.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border.subtle, ...SHADOWS.card },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   categoryBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
-  badgeSurgical: { backgroundColor: 'rgba(229,192,123,0.12)' },
-  badgeMedical: { backgroundColor: 'rgba(183,110,121,0.12)' },
+  badgeSurgical: { backgroundColor: 'rgba(13,92,94,0.1)' },
+  badgeMedical: { backgroundColor: 'rgba(30,58,95,0.1)' },
   categoryText: { ...FONT.xs, fontWeight: '600' },
   date: { ...FONT.xs, color: COLORS.text.tertiary },
   metricsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },

@@ -1,26 +1,26 @@
 {
   "expo": {
-    "name": "FaceGlow Pro",
-    "slug": "faceglow-pro",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "name": "VISAGE Clinic Anteprima",
+    "slug": "visage-clinic-anteprima",
+    "version": "2.0.0",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "faceglowpro",
-    "userInterfaceStyle": "dark",
+    "scheme": "visageclinicanteprima",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-image.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0A0A"
+      "backgroundColor": "#F4F6F8"
     },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.beautydonusum.app",
-      "buildNumber": "1",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.visageclinic.anteprima",
+      "buildNumber": "2",
       "infoPlist": {
-        "NSCameraUsageDescription": "Yüz analiziniz için fotoğraf çekiyoruz.",
-        "NSPhotoLibraryUsageDescription": "Galerinizdeki fotoğrafı analiz için seçiyoruz.",
-        "NSPhotoLibraryAddUsageDescription": "Analiz sonuçlarını galerinize kaydediyoruz.",
+        "NSCameraUsageDescription": "Klinik öncesi yüz analizi için fotoğraf çekiyoruz.",
+        "NSPhotoLibraryUsageDescription": "Galerinizden analiz için bir portre seçmenize izin veriyoruz.",
+        "NSPhotoLibraryAddUsageDescription": "İsteğe bağlı olarak rapor ve görselleri kaydetmeniz için kullanılır.",
         "ITSAppUsesNonExemptEncryption": false,
         "NSPrivacyAccessedAPITypes": []
       },
@@ -31,10 +31,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0A0A0A"
+        "backgroundColor": "#F4F6F8"
       },
-      "package": "com.beautydonusum.app",
-      "versionCode": 2,
+      "package": "com.visageclinic.anteprima",
+      "versionCode": 3,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
@@ -53,7 +53,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Galerinizdeki fotoğrafı analiz için kullanmak istiyoruz.",
-          "cameraPermission": "Yüz analiziniz için kamera kullanmak istiyoruz."
+          "cameraPermission": "Yüz analizi için kamera kullanmak istiyoruz."
         }
       ]
     ],

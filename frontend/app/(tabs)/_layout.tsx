@@ -8,8 +8,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.bar,
-        tabBarActiveTintColor: '#E5C07B',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.3)',
+        tabBarActiveTintColor: '#0D5C5E',
+        tabBarInactiveTintColor: 'rgba(15,23,42,0.35)',
         tabBarLabelStyle: styles.label,
         tabBarBackground: () => (
           <View style={styles.barBg} />
@@ -26,8 +26,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="discover"
         options={{
-          title: 'Keşfet',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass-outline" size={size} color={color} />,
+          title: 'Rehber',
+          tabBarIcon: ({ color, size }) => <Ionicons name="library-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -51,7 +51,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.15)',
+    borderTopColor: 'rgba(15,23,42,0.08)',
     borderTopWidth: 1,
     height: 85,
     paddingBottom: 25,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   barBg: {
     flex: 1,
-    backgroundColor: '#0E0B06',
+    backgroundColor: '#F8FAFB',
   },
   label: { fontSize: 11, fontWeight: '600' },
 });

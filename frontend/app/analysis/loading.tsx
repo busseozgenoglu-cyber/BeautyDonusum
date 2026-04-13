@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
@@ -9,12 +9,11 @@ import Animated, {
   withRepeat, withTiming, withSequence, withDelay,
   interpolate, Easing,
 } from 'react-native-reanimated';
-import api, { setToken } from '../../src/utils/api';
+import api from '../../src/utils/api';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
 import { useAuth } from '../../src/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
 
-const { width: W } = Dimensions.get('window');
 
 function Ring({ index }: { index: number }) {
   const anim = useSharedValue(0);
@@ -61,7 +60,7 @@ function ScanLine() {
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: pos.value }] }));
   return (
     <Animated.View style={[styles.scanLine, style]}>
-      <LinearGradient colors={['transparent', 'rgba(229,192,123,0.7)', 'transparent']} style={styles.scanLineGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+      <LinearGradient colors={['transparent', 'rgba(13,92,94,0.75)', 'transparent']} style={styles.scanLineGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
     </Animated.View>
   );
 }
@@ -76,7 +75,7 @@ const STEPS = [
 export default function LoadingScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
-  const { autoLogin, user } = useAuth();
+  const { autoLogin } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const cancelled = useRef(false);
@@ -125,8 +124,8 @@ export default function LoadingScreen() {
 
   return (
     <View style={styles.root}>
-      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={8} />
-      <LinearGradient colors={['rgba(6,6,12,0.85)', 'rgba(10,10,20,0.9)', 'rgba(6,6,12,0.85)']} style={StyleSheet.absoluteFill} />
+      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={10} />
+      <LinearGradient colors={['rgba(244,246,248,0.92)', 'rgba(238,242,244,0.96)', 'rgba(244,246,248,0.92)']} style={StyleSheet.absoluteFill} />
       <View style={styles.ambientGlow} />
 
       <SafeAreaView style={styles.container}>
@@ -136,7 +135,7 @@ export default function LoadingScreen() {
           <Ring index={1} />
           <Ring index={2} />
           <View style={styles.centerCircle}>
-            <LinearGradient colors={['rgba(229,192,123,0.15)', 'rgba(229,192,123,0.04)']} style={styles.centerGrad}>
+            <LinearGradient colors={['rgba(13,92,94,0.12)', 'rgba(13,92,94,0.04)']} style={styles.centerGrad}>
               <ScanLine />
               <Text style={styles.faceIcon}>👤</Text>
             </LinearGradient>
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg.primary },
   ambientGlow: {
     position: 'absolute', width: 400, height: 400,
-    borderRadius: 200, backgroundColor: 'rgba(229,192,123,0.05)',
+    borderRadius: 200, backgroundColor: 'rgba(13,92,94,0.06)',
     alignSelf: 'center', top: '20%',
   },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
@@ -217,11 +216,11 @@ const styles = StyleSheet.create({
   stepRowActive: { opacity: 1 },
   stepDot: {
     width: 28, height: 28, borderRadius: 14,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5, borderColor: COLORS.border.subtle,
     alignItems: 'center', justifyContent: 'center',
   },
   stepDotDone: { backgroundColor: COLORS.status.success, borderColor: COLORS.status.success },
-  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(229,192,123,0.1)' },
+  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(13,92,94,0.08)' },
   stepNum: { ...FONT.xs, color: COLORS.text.tertiary, fontWeight: '700' },
   stepCheck: { fontSize: 12, color: '#fff', fontWeight: '700' },
   stepLabel: { ...FONT.body, color: COLORS.text.tertiary },
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
   // Progress
   progressTrack: {
     width: '100%', height: 3, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.07)', marginBottom: 8, overflow: 'hidden',
+    backgroundColor: COLORS.border.subtle, marginBottom: 8, overflow: 'hidden',
   },
   progressFill: { height: '100%', backgroundColor: COLORS.brand.primary, borderRadius: 2 },
   progressPct: { ...FONT.xs, color: COLORS.text.tertiary },
@@ -241,7 +240,8 @@ const styles = StyleSheet.create({
   errorText: { ...FONT.body, color: COLORS.status.error, textAlign: 'center' },
   backBtn: {
     borderRadius: RADIUS.md, paddingVertical: 12, paddingHorizontal: 32,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1, borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.surface.card,
   },
   backBtnText: { ...FONT.body, color: COLORS.text.primary },
 });

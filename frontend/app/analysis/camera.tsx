@@ -45,9 +45,7 @@ export default function CameraScreen() {
         let b64 = asset.base64 ?? null;
 
         if (!b64 && asset.uri && Platform.OS !== 'web') {
-          b64 = await FileSystem.readAsStringAsync(asset.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          b64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
         }
         if (!b64 && asset.uri && Platform.OS === 'web') {
           const resp = await fetch(asset.uri);
@@ -136,12 +134,12 @@ export default function CameraScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#F3D088', '#D1A354']}
+                  colors={[...COLORS.gradient.teal]}
                   style={styles.actionBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Ionicons name="camera" size={22} color="#000" />
+                  <Ionicons name="camera" size={22} color="#fff" />
                   <Text style={styles.actionBtnText}>{t('takePhoto')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -162,16 +160,16 @@ export default function CameraScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#F3D088', '#D1A354']}
+                colors={[...COLORS.gradient.teal]}
                 style={styles.actionBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#000" />
+                  <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Ionicons name="scan" size={22} color="#000" />
+                    <Ionicons name="scan" size={22} color="#fff" />
                     <Text style={styles.actionBtnText}>{t('startAnalysis')}</Text>
                   </>
                 )}
@@ -194,12 +192,12 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   title: { ...FONT.h4, color: COLORS.text.primary },
   content: { flex: 1, paddingHorizontal: SPACING.lg },
-  previewContainer: { flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 20 },
+  previewContainer: { flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: COLORS.border.subtle },
   preview: { flex: 1, borderRadius: RADIUS.lg },
   retakeBtn: {
     position: 'absolute', bottom: 16, alignSelf: 'center',
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 16,
+    backgroundColor: 'rgba(15,23,42,0.72)', paddingHorizontal: 16,
     paddingVertical: 10, borderRadius: RADIUS.full,
   },
   retakeText: { ...FONT.small, color: COLORS.text.primary },
@@ -223,12 +221,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 10,
   },
-  actionBtnText: { ...FONT.body, fontWeight: '700', color: COLORS.text.inverse },
+  actionBtnText: { ...FONT.body, fontWeight: '700', color: '#FFFFFF' },
   secondaryBtn: {
     borderRadius: RADIUS.md, paddingVertical: 16,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 10,
-    borderWidth: 1, borderColor: COLORS.surface.glassBorder,
+    borderWidth: 1, borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.surface.card,
   },
   secondaryBtnText: { ...FONT.body, color: COLORS.text.primary },
 });
