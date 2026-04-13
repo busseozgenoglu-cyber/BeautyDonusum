@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
   logoGlow: { position: 'absolute', width: 110, height: 110, borderRadius: 55, backgroundColor: '#E5C07B', opacity: 0.25, transform: [{ scale: 1.4 }] },
   logoBox: { width: 90, height: 90, borderRadius: 28, overflow: 'hidden' },
   logoGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { fontSize: 46, fontWeight: '900', color: '#1A0E00' },
-  brand: { fontSize: 34, fontWeight: '800', color: '#FFFFFF', letterSpacing: 2, marginBottom: 10 },
-  tagline: { fontSize: 15, color: '#E5C07B', letterSpacing: 0.3 },
-  disc: { position: 'absolute', bottom: 44, paddingHorizontal: 48, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', lineHeight: 18 },
+  logoLetter: { fontSize: 46, fontFamily: 'Outfit_900Black', color: '#1A0E00' },
+  brand: { fontSize: 38, fontFamily: 'CormorantGaramond_700Bold', color: '#FFFFFF', letterSpacing: 1.2, marginBottom: 10 },
+  tagline: { fontSize: 15, fontFamily: 'Outfit_500Medium', color: '#E5C07B', letterSpacing: 0.4 },
+  disc: { position: 'absolute', bottom: 44, paddingHorizontal: 48, fontSize: 11, fontFamily: 'Outfit_400Regular', color: 'rgba(255,255,255,0.22)', textAlign: 'center', lineHeight: 18 },
 });

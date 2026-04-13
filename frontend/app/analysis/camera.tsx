@@ -10,7 +10,7 @@ import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
 
 export default function CameraScreen() {
@@ -45,9 +45,7 @@ export default function CameraScreen() {
         let b64 = asset.base64 ?? null;
 
         if (!b64 && asset.uri && Platform.OS !== 'web') {
-          b64 = await FileSystem.readAsStringAsync(asset.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          b64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
         }
         if (!b64 && asset.uri && Platform.OS === 'web') {
           const resp = await fetch(asset.uri);

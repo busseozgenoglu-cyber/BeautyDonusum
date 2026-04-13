@@ -433,7 +433,7 @@ export default function ResultsScreen() {
                 </LinearGradient>
               </View>
 
-              <Text style={styles.paywallTitle}>Premium'a Geç</Text>
+              <Text style={styles.paywallTitle}>{"Premium'a Geç"}</Text>
               <Text style={styles.paywallSubtitle}>
                 Uzman cerrah seviyesinde AI analiz
               </Text>

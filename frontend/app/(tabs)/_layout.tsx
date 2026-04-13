@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { COLORS } from '../../src/utils/theme';
 
 export default function TabLayout() {
   return (
@@ -8,11 +10,15 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.bar,
-        tabBarActiveTintColor: '#E5C07B',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.3)',
+        tabBarActiveTintColor: COLORS.brand.primary,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.32)',
         tabBarLabelStyle: styles.label,
         tabBarBackground: () => (
-          <View style={styles.barBg} />
+          <BlurView
+            intensity={Platform.OS === 'ios' ? 48 : 32}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+          />
         ),
       }}
     >
@@ -50,17 +56,13 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.15)',
-    borderTopWidth: 1,
-    height: 85,
-    paddingBottom: 25,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(8,6,6,0.94)' : 'transparent',
+    borderTopColor: 'rgba(229,192,123,0.18)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    height: 88,
+    paddingBottom: 26,
     paddingTop: 10,
     elevation: 0,
   },
-  barBg: {
-    flex: 1,
-    backgroundColor: '#0E0B06',
-  },
-  label: { fontSize: 11, fontWeight: '600' },
+  label: { fontSize: 10, fontFamily: 'Outfit_600SemiBold', letterSpacing: 0.2 },
 });
