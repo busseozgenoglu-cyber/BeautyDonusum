@@ -41,7 +41,7 @@ function Ring({ index }: { index: number }) {
   }));
 
   return (
-    <Animated.View style={[styles.ring, style, { borderColor: `rgba(229,192,123,${0.7 - index * 0.18})` }]} />
+    <Animated.View style={[styles.ring, style, { borderColor: `rgba(45,212,191,${0.55 - index * 0.12})` }]} />
   );
 }
 
@@ -59,7 +59,7 @@ function ScanLine() {
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: pos.value }] }));
   return (
     <Animated.View style={[styles.scanLine, style]}>
-      <LinearGradient colors={['transparent', 'rgba(229,192,123,0.7)', 'transparent']} style={styles.scanLineGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+      <LinearGradient colors={['transparent', 'rgba(45,212,191,0.65)', 'transparent']} style={styles.scanLineGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
     </Animated.View>
   );
 }
@@ -139,7 +139,7 @@ export default function LoadingScreen() {
           <Ring index={1} />
           <Ring index={2} />
           <View style={styles.centerCircle}>
-            <LinearGradient colors={['rgba(229,192,123,0.15)', 'rgba(229,192,123,0.04)']} style={styles.centerGrad}>
+            <LinearGradient colors={['rgba(45,212,191,0.18)', 'rgba(45,212,191,0.05)']} style={styles.centerGrad}>
               <ScanLine />
               <Text style={styles.faceIcon}>👤</Text>
             </LinearGradient>
@@ -194,7 +194,7 @@ function delay(ms: number) {
 const styles = StyleSheet.create({
   ambientGlow: {
     position: 'absolute', width: 400, height: 400,
-    borderRadius: 200, backgroundColor: 'rgba(229,192,123,0.05)',
+    borderRadius: 200, backgroundColor: 'rgba(45,212,191,0.06)',
     alignSelf: 'center', top: '20%',
   },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   stepDotDone: { backgroundColor: COLORS.status.success, borderColor: COLORS.status.success },
-  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(229,192,123,0.1)' },
+  stepDotActive: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(45,212,191,0.12)' },
   stepNum: { ...FONT.xs, color: COLORS.text.tertiary, fontWeight: '700' },
   stepCheck: { fontSize: 12, color: '#fff', fontWeight: '700' },
   stepLabel: { ...FONT.body, color: COLORS.text.tertiary },

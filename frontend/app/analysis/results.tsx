@@ -75,7 +75,7 @@ function RecCard({ rec, locked }: { rec: any; locked: boolean }) {
         <Text style={rStyles.title}>{rec.title}</Text>
         {hasCost && (
           <View style={rStyles.costBadge}>
-            <Ionicons name="cash-outline" size={12} color="#E5C07B" />
+            <Ionicons name="cash-outline" size={12} color="#2DD4BF" />
             <Text style={rStyles.costText}>
               {(rec.cost_min_tl / 1000).toFixed(0)}K–{(rec.cost_max_tl / 1000).toFixed(0)}K ₺
             </Text>
@@ -113,8 +113,8 @@ const rStyles = StyleSheet.create({
   area: { ...FONT.xs, color: COLORS.text.tertiary },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 10 },
   title: { ...FONT.h4, color: COLORS.text.primary, flex: 1 },
-  costBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(229,192,123,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(229,192,123,0.25)' },
-  costText: { fontSize: 11, fontWeight: '700', color: '#E5C07B' },
+  costBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(45,212,191,0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, borderWidth: 1, borderColor: 'rgba(45,212,191,0.25)' },
+  costText: { fontSize: 11, fontWeight: '700', color: '#2DD4BF' },
   desc: { ...FONT.small, color: COLORS.text.secondary, lineHeight: 20, marginBottom: 6 },
   reason: { ...FONT.xs, color: COLORS.text.tertiary, fontStyle: 'italic', marginBottom: 10 },
   improvRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' },
@@ -199,7 +199,7 @@ const baStyles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#0a0a0a',
     borderWidth: 1,
-    borderColor: 'rgba(229,192,123,0.2)',
+    borderColor: 'rgba(45,212,191,0.2)',
   },
   full: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, width: '100%', height: '100%' },
   clip: { position: 'absolute', left: 0, top: 0, bottom: 0, overflow: 'hidden' },
@@ -408,7 +408,7 @@ export default function ResultsScreen() {
           {/* Score Card */}
           <Animated.View entering={FadeInDown.duration(400)} style={styles.scoreCardOuter}>
             <LinearGradient
-              colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.02)', 'transparent']}
+              colors={['rgba(45,212,191,0.12)', 'rgba(45,212,191,0.02)', 'transparent']}
               style={styles.scoreCard}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
             >
@@ -421,7 +421,7 @@ export default function ResultsScreen() {
                   </View>
                 </View>
                 <View style={styles.scoreRing}>
-                  <LinearGradient colors={['#F5E0A0', '#C9963A']} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                  <LinearGradient colors={[...COLORS.gradient.beam]} style={styles.scoreRingFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Text style={styles.scoreRingText}>{displayScore.toFixed(1)}</Text>
                   </LinearGradient>
                 </View>
@@ -454,8 +454,8 @@ export default function ResultsScreen() {
               <Text style={styles.sectionTitle}>Yüz Şekli Analizi</Text>
               <View style={styles.faceShapeCard}>
                 <View style={styles.faceShapeHeader}>
-                  <LinearGradient colors={['rgba(229,192,123,0.25)', 'rgba(229,192,123,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Ionicons name="scan-outline" size={22} color="#E5C07B" />
+                  <LinearGradient colors={['rgba(45,212,191,0.25)', 'rgba(45,212,191,0.08)']} style={styles.faceShapeIcon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Ionicons name="scan-outline" size={22} color="#2DD4BF" />
                   </LinearGradient>
                   <View style={styles.faceShapeMeta}>
                     <Text style={styles.faceShapeName}>{recs.face_shape.charAt(0).toUpperCase() + recs.face_shape.slice(1)} Yüz</Text>
@@ -464,7 +464,7 @@ export default function ResultsScreen() {
                 </View>
                 {recs.face_shape_tips?.makeup ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="color-palette-outline" size={14} color="#2DD4BF" /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Makyaj</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.makeup}</Text>
@@ -473,7 +473,7 @@ export default function ResultsScreen() {
                 ) : null}
                 {recs.face_shape_tips?.hair ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="cut-outline" size={14} color="#2DD4BF" /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Saç</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.hair}</Text>
@@ -482,7 +482,7 @@ export default function ResultsScreen() {
                 ) : null}
                 {recs.face_shape_tips?.glasses ? (
                   <View style={styles.faceShapeTipRow}>
-                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color="#E5C07B" /></View>
+                    <View style={styles.faceShapeTipIcon}><Ionicons name="glasses-outline" size={14} color="#2DD4BF" /></View>
                     <View style={styles.faceShapeTipContent}>
                       <Text style={styles.faceShapeTipLabel}>Gözlük</Text>
                       <Text style={styles.faceShapeTipText}>{recs.face_shape_tips.glasses}</Text>
@@ -571,7 +571,7 @@ export default function ResultsScreen() {
                   </View>
                 ) : (
                   <LinearGradient
-                    colors={isPremium ? ['rgba(229,192,123,0.1)', 'rgba(229,192,123,0.03)'] : ['rgba(255,255,255,0.03)', 'transparent']}
+                    colors={isPremium ? ['rgba(45,212,191,0.1)', 'rgba(45,212,191,0.03)'] : ['rgba(255,255,255,0.03)', 'transparent']}
                     style={styles.transformPlaceholderInner}
                   >
                     <Ionicons
@@ -622,22 +622,22 @@ export default function ResultsScreen() {
               </TouchableOpacity>
 
               <LinearGradient
-                colors={['rgba(229,192,123,0.18)', 'rgba(229,192,123,0.04)', 'transparent']}
+                colors={['rgba(45,212,191,0.18)', 'rgba(45,212,191,0.04)', 'transparent']}
                 style={styles.paywallTopGlow}
               />
 
               {/* Free Trial Badge */}
               <View style={styles.trialBadge}>
                 <LinearGradient colors={['#2A1F00', '#1A1200']} style={styles.trialBadgeGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                  <Ionicons name="gift-outline" size={13} color="#F5C842" />
+                  <Ionicons name="gift-outline" size={13} color={COLORS.brand.secondary} />
                   <Text style={styles.trialBadgeText}>7 GÜN ÜCRETSİZ DENEME</Text>
                 </LinearGradient>
               </View>
 
               {/* Icon */}
               <View style={styles.paywallIconWrap}>
-                <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={styles.paywallIconGrad}>
-                  <Ionicons name="diamond" size={30} color="#0A0700" />
+                <LinearGradient colors={[...COLORS.gradient.beam]} style={styles.paywallIconGrad}>
+                  <Ionicons name="diamond" size={30} color={COLORS.text.inverse} />
                 </LinearGradient>
               </View>
 
@@ -698,7 +698,7 @@ export default function ResultsScreen() {
                 ].map((f, i) => (
                   <View key={i} style={styles.featureItem}>
                     <LinearGradient
-                      colors={['rgba(229,192,123,0.12)', 'rgba(229,192,123,0.04)']}
+                      colors={['rgba(45,212,191,0.12)', 'rgba(45,212,191,0.04)']}
                       style={styles.featureIconBox}
                     >
                       <Ionicons name={f.icon as any} size={18} color={COLORS.brand.primary} />
@@ -715,7 +715,7 @@ export default function ResultsScreen() {
               {/* Pricing */}
               <View style={styles.pricingBox}>
                 <LinearGradient
-                  colors={['rgba(229,192,123,0.08)', 'rgba(229,192,123,0.02)']}
+                  colors={['rgba(45,212,191,0.08)', 'rgba(45,212,191,0.02)']}
                   style={styles.pricingGrad}
                 >
                   <View style={styles.pricingRow}>
@@ -739,16 +739,16 @@ export default function ResultsScreen() {
                 disabled={purchasing}
               >
                 <LinearGradient
-                  colors={['#F8ECC0', '#E5C07B', '#C08A28']}
+                  colors={[...COLORS.gradient.beam]}
                   style={styles.paywallBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
                   {purchasing ? (
-                    <ActivityIndicator size="small" color="#0A0700" />
+                    <ActivityIndicator size="small" color={COLORS.text.inverse} />
                   ) : (
                     <>
-                      <Ionicons name="diamond" size={18} color="#0A0700" />
+                      <Ionicons name="diamond" size={18} color={COLORS.text.inverse} />
                       <Text style={styles.paywallBtnText}>7 Gün Ücretsiz Başla</Text>
                     </>
                   )}
@@ -806,12 +806,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg, paddingVertical: 14,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' },
-  headerIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(229,192,123,0.1)', borderWidth: 1, borderColor: 'rgba(229,192,123,0.22)' },
+  headerIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(45,212,191,0.1)', borderWidth: 1, borderColor: 'rgba(45,212,191,0.22)' },
   headerTitle: { ...FONT.h4, color: COLORS.text.primary },
   scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 48 },
 
   // Score
-  scoreCardOuter: { borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)' },
+  scoreCardOuter: { borderRadius: RADIUS.xl, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: 'rgba(45,212,191,0.15)' },
   scoreCard: { padding: 24 },
   scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   scoreLabel: { ...FONT.small, color: COLORS.text.secondary, marginBottom: 4 },
@@ -820,12 +820,12 @@ const styles = StyleSheet.create({
   scoreMax: { ...FONT.h3, color: COLORS.text.tertiary },
   scoreRing: { width: 80, height: 80, borderRadius: 40, overflow: 'hidden' },
   scoreRingFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scoreRingText: { fontSize: 22, fontWeight: '800', color: '#0A0700' },
+  scoreRingText: { fontSize: 22, fontWeight: '800', color: COLORS.text.inverse },
   catBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: RADIUS.full, backgroundColor: 'rgba(229,192,123,0.08)',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)',
+    borderRadius: RADIUS.full, backgroundColor: 'rgba(45,212,191,0.08)',
+    borderWidth: 1, borderColor: 'rgba(45,212,191,0.2)',
   },
   catText: { ...FONT.xs, color: COLORS.brand.primary, fontWeight: '600' },
 
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
   intensityLabel: { ...FONT.xs, color: COLORS.text.tertiary, fontFamily: 'Outfit_600SemiBold' },
   intensityPills: { flexDirection: 'row', gap: 8 },
   intensityPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
-  intensityPillOn: { borderColor: 'rgba(229,192,123,0.45)', backgroundColor: 'rgba(229,192,123,0.12)' },
+  intensityPillOn: { borderColor: 'rgba(45,212,191,0.45)', backgroundColor: 'rgba(45,212,191,0.12)' },
   intensityPillTxt: { ...FONT.xs, color: COLORS.text.tertiary, fontFamily: 'Outfit_500Medium' },
   intensityPillTxtOn: { color: COLORS.brand.primary },
   secondaryTransformBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 12 },
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingTop: 12, paddingBottom: 40,
     alignItems: 'center',
     borderWidth: 1, borderBottomWidth: 0,
-    borderColor: 'rgba(229,192,123,0.2)', overflow: 'hidden',
+    borderColor: 'rgba(45,212,191,0.2)', overflow: 'hidden',
   },
   paywallClose: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 20 },
   paywallTopGlow: {
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,200,66,0.35)',
   },
-  trialBadgeText: { fontSize: 11, fontWeight: '800', color: '#F5C842', letterSpacing: 1.2 },
+  trialBadgeText: { fontSize: 11, fontWeight: '800', color: COLORS.brand.secondary, letterSpacing: 1.2 },
   paywallIconWrap: { width: 68, height: 68, borderRadius: 20, overflow: 'hidden', marginBottom: 14 },
   paywallIconGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   paywallTitle: { fontSize: 26, fontWeight: '800', color: COLORS.text.primary, marginBottom: 4, textAlign: 'center', letterSpacing: -0.5 },
@@ -928,13 +928,13 @@ const styles = StyleSheet.create({
   featureIconBox: {
     width: 38, height: 38, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(229,192,123,0.18)',
+    borderWidth: 1, borderColor: 'rgba(45,212,191,0.18)',
   },
   featureTextWrap: { flex: 1 },
   featureTitle: { ...FONT.small, color: COLORS.text.primary, fontWeight: '600' },
   featureDesc: { fontSize: 11, color: COLORS.text.tertiary, marginTop: 1, lineHeight: 15 },
   // Pricing
-  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  pricingBox: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(45,212,191,0.2)' },
   pricingGrad: { paddingVertical: 14, paddingHorizontal: 18 },
   pricingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pricingFree: { ...FONT.small, color: COLORS.brand.primary, fontWeight: '700' },
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
   // Button
   paywallBtnWrap: { width: '100%', borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: 12 },
   paywallBtn: { paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  paywallBtnText: { fontSize: 17, color: '#0A0700', fontWeight: '800', letterSpacing: -0.2 },
+  paywallBtnText: { fontSize: 17, color: COLORS.text.inverse, fontWeight: '800', letterSpacing: -0.2 },
   paywallNote: { ...FONT.xs, color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
   // Trust
   trustRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
@@ -958,15 +958,15 @@ const styles = StyleSheet.create({
   devBypassText: { fontSize: 12, color: '#FF6464', fontWeight: '700' },
 
   // Face Shape Card
-  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(229,192,123,0.2)' },
+  faceShapeCard: { backgroundColor: '#111111', borderRadius: RADIUS.lg, padding: 18, borderWidth: 1, borderColor: 'rgba(45,212,191,0.2)' },
   faceShapeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginBottom: 16 },
   faceShapeIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   faceShapeMeta: { flex: 1 },
-  faceShapeName: { fontSize: 17, fontWeight: '700', color: '#E5C07B', marginBottom: 4 },
+  faceShapeName: { fontSize: 17, fontWeight: '700', color: '#2DD4BF', marginBottom: 4 },
   faceShapeDesc: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
   faceShapeTipRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(229,192,123,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  faceShapeTipIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(45,212,191,0.1)', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   faceShapeTipContent: { flex: 1 },
-  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: '#E5C07B', letterSpacing: 0.5, marginBottom: 3 },
+  faceShapeTipLabel: { fontSize: 11, fontWeight: '700', color: '#2DD4BF', letterSpacing: 0.5, marginBottom: 3 },
   faceShapeTipText: { fontSize: 12, color: COLORS.text.secondary, lineHeight: 18 },
 });

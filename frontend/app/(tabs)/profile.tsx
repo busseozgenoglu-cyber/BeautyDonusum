@@ -106,16 +106,16 @@ export default function ProfileScreen() {
           <>
             <TouchableOpacity testID="upgrade-btn" onPress={handleUpgrade} activeOpacity={0.8} disabled={purchasing}>
               <LinearGradient
-                colors={['#F3D088', '#D1A354']}
+                colors={[...COLORS.gradient.beam]}
                 style={styles.upgradeBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 {purchasing ? (
-                  <ActivityIndicator size="small" color="#000" />
+                  <ActivityIndicator size="small" color={COLORS.text.inverse} />
                 ) : (
                   <>
-                    <Ionicons name="diamond" size={20} color="#000" />
+                    <Ionicons name="diamond" size={20} color={COLORS.text.inverse} />
                     <Text style={styles.upgradeText}>{t('upgradePremium')}</Text>
                   </>
                 )}
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 6, borderRadius: RADIUS.full,
     backgroundColor: COLORS.surface.glass, borderWidth: 1, borderColor: COLORS.surface.glassBorder,
   },
-  subBadgePremium: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(229,192,123,0.1)' },
+  subBadgePremium: { borderColor: COLORS.brand.primary, backgroundColor: 'rgba(45,212,191,0.1)' },
   subText: { ...FONT.xs, color: COLORS.text.secondary, fontWeight: '600' },
   subTextPremium: { color: COLORS.brand.primary },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },

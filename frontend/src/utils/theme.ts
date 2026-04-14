@@ -1,39 +1,55 @@
-/** Jewel & luxury palette: warm gold + dusty rose on near-black (no generic purple UI). */
+/**
+ * Velum — deep ink + bioluminescent teal (distinct from generic “gold luxury” AI apps).
+ */
 export const COLORS = {
   bg: {
-    primary: '#0A0A0A',
-    secondary: '#141414',
-    tertiary: '#1F1F1F',
-    overlay: 'rgba(10,10,10,0.7)',
-    deep: '#06060C',
-    canvas: '#0C0A08',
+    primary: '#040B12',
+    secondary: '#0A1520',
+    tertiary: '#0F1F2E',
+    overlay: 'rgba(4, 11, 18, 0.88)',
+    deep: '#02060A',
+    canvas: '#061018',
   },
-  surface: { glass: 'rgba(255,255,255,0.05)', glassBorder: 'rgba(255,255,255,0.1)', card: '#121212', elevated: '#1A1A1A' },
-  brand: { primary: '#E5C07B', secondary: '#B76E79', accent: '#F5F5F7' },
-  gradient: { gold: ['#F3D088', '#D1A354'] as const, rose: ['#CD828D', '#9F5B66'] as const },
-  /** Medikal / ikincil vurgular (mor yerine gül / şampanya) */
+  surface: {
+    glass: 'rgba(45, 212, 191, 0.06)',
+    glassBorder: 'rgba(94, 234, 212, 0.14)',
+    card: 'rgba(10, 21, 32, 0.92)',
+    elevated: '#0F1C28',
+  },
+  brand: {
+    primary: '#2DD4BF',
+    secondary: '#5EEAD4',
+    accent: '#E8FDF9',
+  },
+  gradient: {
+    beam: ['#5EEAD4', '#2DD4BF', '#14B8A6'] as const,
+    depth: ['#0D9488', '#115E59', '#042F2E'] as const,
+    warm: ['#F0AB8C', '#E07A5F'] as const,
+    /** @deprecated use beam — kept for gradual migration */
+    gold: ['#5EEAD4', '#2DD4BF'] as const,
+    rose: ['#34D399', '#059669'] as const,
+  },
   accent: {
-    rose: '#B76E79',
-    roseLight: '#D4A0AA',
-    roseDeep: '#8E4E59',
-    champagne: '#C9A86C',
-    bloomGold: '#E5C07B',
-    bloomRose: '#B76E79',
+    rose: '#E07A5F',
+    roseLight: '#F0AB8C',
+    roseDeep: '#C45C42',
+    champagne: '#94A3B8',
+    bloomGold: '#2DD4BF',
+    bloomRose: '#0D9488',
   },
-  text: { primary: '#FFFFFF', secondary: '#A1A1AA', tertiary: '#71717A', inverse: '#000000' },
-  status: { success: '#34C759', warning: '#FF9F0A', error: '#FF453A', info: '#0A84FF' },
+  text: { primary: '#F8FAFC', secondary: '#94A3B8', tertiary: '#64748B', inverse: '#020617' },
+  status: { success: '#34D399', warning: '#FBBF24', error: '#F87171', info: '#38BDF8' },
 };
 
 export const SPACING = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 };
 export const RADIUS = { sm: 8, md: 16, lg: 24, xl: 32, full: 9999 };
 
 export const SHADOWS = {
-  card: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
-  glow: { shadowColor: '#E5C07B', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  glowRose: { shadowColor: '#B76E79', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.35, shadowRadius: 18, elevation: 12 },
+  card: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 12 },
+  glow: { shadowColor: '#2DD4BF', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.45, shadowRadius: 24, elevation: 14 },
+  glowRose: { shadowColor: '#14B8A6', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 12 },
 };
 
-/** expo-google-fonts family names (load in root _layout). */
 export const FONT = {
   h1: { fontSize: 36, fontFamily: 'CormorantGaramond_700Bold', letterSpacing: -0.5 },
   h2: { fontSize: 28, fontFamily: 'CormorantGaramond_700Bold', letterSpacing: -0.3 },

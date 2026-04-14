@@ -36,7 +36,7 @@ const RISK_COLORS: Record<string, string> = {
 function ProcedureCard({ item, index }: { item: Procedure; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const isSurgical = item.category === 'cerrahi';
-  const accentColor = isSurgical ? '#E5C07B' : '#B76E79';
+  const accentColor = isSurgical ? COLORS.brand.primary : COLORS.brand.secondary;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(400)}>
@@ -48,7 +48,7 @@ function ProcedureCard({ item, index }: { item: Procedure; index: number }) {
         {/* Header Row */}
         <View style={s.cardHeader}>
           <LinearGradient
-            colors={isSurgical ? ['rgba(229,192,123,0.22)', 'rgba(229,192,123,0.08)'] : ['rgba(183,110,121,0.25)', 'rgba(183,110,121,0.08)']}
+            colors={isSurgical ? ['rgba(45,212,191,0.22)', 'rgba(45,212,191,0.06)'] : ['rgba(94,234,212,0.2)', 'rgba(20,184,166,0.08)']}
             style={s.iconBox}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           >
@@ -164,7 +164,7 @@ export default function DiscoverScreen() {
         <ScrollView
           contentContainerStyle={s.scroll}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E5C07B" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand.primary} />}
         >
           {/* Header */}
           <Animated.View entering={FadeInDown.duration(400)} style={s.header}>
@@ -190,7 +190,7 @@ export default function DiscoverScreen() {
 
           {/* Info Banner */}
           <Animated.View entering={FadeInDown.delay(140).duration(400)} style={s.banner}>
-            <Ionicons name="information-circle-outline" size={16} color="#E5C07B" />
+            <Ionicons name="information-circle-outline" size={16} color={COLORS.brand.primary} />
             <Text style={s.bannerText}>
               Fiyatlar Türkiye ortalamasına göredir. Kesin fiyat için klinikle görüşünüz.
             </Text>
@@ -198,7 +198,7 @@ export default function DiscoverScreen() {
 
           {/* Content */}
           {loading ? (
-            <ActivityIndicator color="#E5C07B" style={{ marginTop: 60 }} />
+            <ActivityIndicator color={COLORS.brand.primary} style={{ marginTop: 60 }} />
           ) : (
             <View style={s.list}>
               {filtered.map((item, i) => (
@@ -233,16 +233,16 @@ const s = StyleSheet.create({
     paddingHorizontal: 18, paddingVertical: 9, borderRadius: 99,
     backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  filterBtnActive: { backgroundColor: 'rgba(229,192,123,0.18)', borderColor: 'rgba(229,192,123,0.4)' },
+  filterBtnActive: { backgroundColor: 'rgba(45,212,191,0.14)', borderColor: 'rgba(45,212,191,0.38)' },
   filterTxt: { fontSize: 13, fontWeight: '600', color: COLORS.text.tertiary },
-  filterTxtActive: { color: '#E5C07B' },
+  filterTxtActive: { color: COLORS.brand.primary },
 
   banner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    backgroundColor: 'rgba(229,192,123,0.07)', borderRadius: 12,
-    padding: 14, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(229,192,123,0.15)',
+    backgroundColor: 'rgba(45,212,191,0.08)', borderRadius: 12,
+    padding: 14, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(45,212,191,0.18)',
   },
-  bannerText: { fontSize: 12, color: 'rgba(229,192,123,0.8)', flex: 1, lineHeight: 18 },
+  bannerText: { fontSize: 12, color: COLORS.text.secondary, flex: 1, lineHeight: 18 },
 
   list: { gap: 0 },
 

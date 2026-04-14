@@ -57,7 +57,7 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   bar: {
     backgroundColor: Platform.OS === 'android' ? 'rgba(8,6,6,0.94)' : 'transparent',
-    borderTopColor: 'rgba(229,192,123,0.18)',
+    borderTopColor: 'rgba(45,212,191,0.22)',
     borderTopWidth: StyleSheet.hairlineWidth,
     height: 88,
     paddingBottom: 26,

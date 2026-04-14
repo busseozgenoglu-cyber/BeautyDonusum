@@ -136,7 +136,7 @@ export default function CameraScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#F3D088', '#D1A354']}
+                  colors={[...COLORS.gradient.beam]}
                   style={styles.actionBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -162,7 +162,7 @@ export default function CameraScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#F3D088', '#D1A354']}
+                colors={[...COLORS.gradient.beam]}
                 style={styles.actionBtn}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}

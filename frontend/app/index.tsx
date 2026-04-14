@@ -9,23 +9,30 @@ import Animated, {
   withRepeat, withSequence, interpolate, Easing,
 } from 'react-native-reanimated';
 import { AetherScreen } from '../src/components/AetherScreen';
+import { COLORS, RADIUS, SHADOWS } from '../src/utils/theme';
 
-function Ring({ delay, size }: { delay: number; size: number }) {
+function PulseOrb({ delay, size }: { delay: number; size: number }) {
   const a = useSharedValue(0);
   useEffect(() => {
-    a.value = withDelay(delay, withRepeat(
-      withSequence(
-        withTiming(1, { duration: 2600, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: 0 }),
-      ), -1
-    ));
+    a.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 2200, easing: Easing.out(Easing.quad) }),
+          withTiming(0, { duration: 0 }),
+        ),
+        -1,
+      ),
+    );
   }, []);
   const style = useAnimatedStyle(() => ({
-    opacity: interpolate(a.value, [0, 0.25, 1], [0, 0.6, 0]),
-    transform: [{ scale: interpolate(a.value, [0, 1], [0.5, 1.3]) }],
-    width: size, height: size, borderRadius: size / 2,
+    opacity: interpolate(a.value, [0, 0.35, 1], [0, 0.45, 0]),
+    transform: [{ scale: interpolate(a.value, [0, 1], [0.4, 1.15]) }],
+    width: size,
+    height: size,
+    borderRadius: size / 2,
   }));
-  return <Animated.View style={[styles.ring, style]} />;
+  return <Animated.View style={[styles.orbRing, style]} />;
 }
 
 export default function SplashScreen() {
@@ -33,16 +40,16 @@ export default function SplashScreen() {
   const { t } = useLang();
   const router = useRouter();
 
-  const logoS = useSharedValue(0.5);
+  const logoS = useSharedValue(0.4);
   const logoO = useSharedValue(0);
+  const lineW = useSharedValue(0);
   const txtO = useSharedValue(0);
-  const subO = useSharedValue(0);
 
   useEffect(() => {
-    logoS.value = withTiming(1, { duration: 1000, easing: Easing.out(Easing.back(1.8)) });
-    logoO.value = withTiming(1, { duration: 700 });
-    txtO.value = withDelay(600, withTiming(1, { duration: 700 }));
-    subO.value = withDelay(1000, withTiming(1, { duration: 600 }));
+    logoS.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.back(1.6)) });
+    logoO.value = withTiming(1, { duration: 600 });
+    lineW.value = withDelay(400, withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) }));
+    txtO.value = withDelay(700, withTiming(1, { duration: 500 }));
   }, []);
 
   useEffect(() => {
@@ -51,63 +58,78 @@ export default function SplashScreen() {
         if (!user) await autoLogin();
         router.replace('/(tabs)/home');
       };
-      const timer = setTimeout(run, 1200);
+      const timer = setTimeout(run, 1100);
       return () => clearTimeout(timer);
     }
   }, [loading, user]);
 
   const logoStyle = useAnimatedStyle(() => ({ opacity: logoO.value, transform: [{ scale: logoS.value }] }));
+  const lineStyle = useAnimatedStyle(() => ({
+    opacity: lineW.value,
+    transform: [{ scaleX: lineW.value }],
+  }));
   const txtStyle = useAnimatedStyle(() => ({ opacity: txtO.value }));
-  const subStyle = useAnimatedStyle(() => ({ opacity: subO.value }));
 
   return (
     <AetherScreen>
-    <View style={styles.root}>
-      <LinearGradient colors={['rgba(12,8,4,0.5)', 'rgba(8,6,12,0.35)', 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <View style={styles.root}>
+        <View style={styles.orbits}>
+          <PulseOrb delay={0} size={200} />
+          <PulseOrb delay={600} size={300} />
+          <PulseOrb delay={1200} size={400} />
+        </View>
 
-      {/* Big ambient blooms */}
-      <View style={styles.bloomTL} />
-      <View style={styles.bloomBR} />
-
-      {/* Rings */}
-      <View style={styles.rings}>
-        <Ring delay={0} size={220} />
-        <Ring delay={800} size={340} />
-        <Ring delay={1600} size={460} />
-      </View>
-
-      {/* Logo */}
-      <Animated.View style={[styles.logoWrap, logoStyle]}>
-        <View style={styles.logoGlow} />
-        <View style={styles.logoBox}>
-          <LinearGradient colors={['#F8ECC0', '#E5C07B', '#B8882E']} style={styles.logoGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <Animated.View style={[styles.logoBlock, logoStyle]}>
+          <LinearGradient colors={[...COLORS.gradient.beam]} style={styles.logoHex} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <Text style={styles.logoLetter}>F</Text>
           </LinearGradient>
-        </View>
-      </Animated.View>
+          <View style={styles.badgeVelum}>
+            <Text style={styles.badgeVelumTxt}>VELUM</Text>
+          </View>
+        </Animated.View>
 
-      {/* Brand */}
-      <Animated.Text style={[styles.brand, txtStyle]}>FaceGlow Pro</Animated.Text>
-      <Animated.Text style={[styles.tagline, subStyle]}>{t('tagline')}</Animated.Text>
+        <Text style={styles.brand}>FaceGlow Pro</Text>
+        <Animated.View style={[styles.lineWrap, lineStyle]}>
+          <LinearGradient colors={['transparent', COLORS.brand.primary, 'transparent']} style={styles.lineGrad} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} />
+        </Animated.View>
+        <Animated.Text style={[styles.tagline, txtStyle]}>{t('tagline')}</Animated.Text>
 
-      <Text style={styles.disc}>{t('disclaimer')}</Text>
-    </View>
+        <Text style={styles.disc}>{t('disclaimer')}</Text>
+      </View>
     </AetherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bloomTL: { position: 'absolute', top: -60, left: -60, width: 320, height: 320, borderRadius: 160, backgroundColor: '#E5C07B', opacity: 0.15 },
-  bloomBR: { position: 'absolute', bottom: -60, right: -80, width: 280, height: 280, borderRadius: 140, backgroundColor: '#B76E79', opacity: 0.12 },
-  rings: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', borderWidth: 1.5, borderColor: '#E5C07B' },
-  logoWrap: { alignItems: 'center', marginBottom: 28, zIndex: 1 },
-  logoGlow: { position: 'absolute', width: 110, height: 110, borderRadius: 55, backgroundColor: '#E5C07B', opacity: 0.25, transform: [{ scale: 1.4 }] },
-  logoBox: { width: 90, height: 90, borderRadius: 28, overflow: 'hidden' },
-  logoGrad: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { fontSize: 46, fontFamily: 'Outfit_900Black', color: '#1A0E00' },
-  brand: { fontSize: 38, fontFamily: 'CormorantGaramond_700Bold', color: '#FFFFFF', letterSpacing: 1.2, marginBottom: 10 },
-  tagline: { fontSize: 15, fontFamily: 'Outfit_500Medium', color: '#E5C07B', letterSpacing: 0.4 },
-  disc: { position: 'absolute', bottom: 44, paddingHorizontal: 48, fontSize: 11, fontFamily: 'Outfit_400Regular', color: 'rgba(255,255,255,0.22)', textAlign: 'center', lineHeight: 18 },
+  root: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  orbits: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  orbRing: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(45,212,191,0.35)' },
+
+  logoBlock: { alignItems: 'center', marginBottom: 20, zIndex: 2 },
+  logoHex: {
+    width: 88,
+    height: 88,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.glow,
+  },
+  logoLetter: { fontSize: 44, fontFamily: 'Outfit_900Black', color: COLORS.text.inverse },
+  badgeVelum: {
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.surface.glassBorder,
+    backgroundColor: 'rgba(45,212,191,0.08)',
+  },
+  badgeVelumTxt: { fontSize: 9, fontFamily: 'Outfit_700Bold', color: COLORS.brand.secondary, letterSpacing: 2 },
+
+  brand: { fontSize: 34, fontFamily: 'CormorantGaramond_700Bold', color: COLORS.text.primary, letterSpacing: 0.8 },
+  lineWrap: { width: '72%', height: 2, marginVertical: 14, borderRadius: 1, overflow: 'hidden' },
+  lineGrad: { flex: 1 },
+  tagline: { fontSize: 15, fontFamily: 'Outfit_500Medium', color: COLORS.text.secondary, textAlign: 'center', lineHeight: 22 },
+
+  disc: { position: 'absolute', bottom: 40, fontSize: 11, fontFamily: 'Outfit_400Regular', color: COLORS.text.tertiary, textAlign: 'center', lineHeight: 17 },
 });
