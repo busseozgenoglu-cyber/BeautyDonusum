@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
+import { COLORS } from '../../src/utils/theme';
+import { AetherScreen } from '../../src/components/AetherScreen';
 import api from '../../src/utils/api';
 
 type Procedure = {
@@ -157,11 +158,8 @@ export default function DiscoverScreen() {
   const filtered = filter === 'all' ? procedures : procedures.filter(p => p.category === filter);
 
   return (
+    <AetherScreen>
     <View style={s.root}>
-      <LinearGradient colors={['#0D0A06', '#0A0A0C', '#080810']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-      <View style={s.bloomGold} />
-      <View style={s.bloomRose} />
-
       <SafeAreaView style={s.safe}>
         <ScrollView
           contentContainerStyle={s.scroll}
@@ -217,13 +215,12 @@ export default function DiscoverScreen() {
         </ScrollView>
       </SafeAreaView>
     </View>
+    </AetherScreen>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0A0A' },
-  bloomGold: { position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: 140, backgroundColor: '#E5C07B', opacity: 0.12 },
-  bloomRose: { position: 'absolute', bottom: 80, left: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: '#B76E79', opacity: 0.10 },
+  root: { flex: 1 },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
 

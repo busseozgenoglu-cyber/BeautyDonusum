@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
+import { AetherScreen } from '../../src/components/AetherScreen';
 
 export default function CameraScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
@@ -78,6 +79,7 @@ export default function CameraScreen() {
   };
 
   return (
+    <AetherScreen>
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
@@ -179,11 +181,12 @@ export default function CameraScreen() {
         </View>
       </View>
     </SafeAreaView>
+    </AetherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg.primary },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',

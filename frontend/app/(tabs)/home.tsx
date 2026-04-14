@@ -7,6 +7,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { COLORS, SHADOWS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeIn, ZoomIn } from 'react-native-reanimated';
+import { AetherScreen } from '../../src/components/AetherScreen';
 
 function FaceMesh() {
   const pulse = useRef(new RNAnimated.Value(1)).current;
@@ -88,16 +89,8 @@ export default function HomeScreen() {
   };
 
   return (
+    <AetherScreen>
     <View style={s.root}>
-      <LinearGradient
-        colors={[COLORS.bg.canvas, COLORS.bg.deep, '#050508']}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      />
-      <View style={s.bloomGold} />
-      <View style={s.bloomRose} />
-      <View style={s.bloomChampagne} />
-
       <SafeAreaView style={s.safe}>
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
@@ -240,14 +233,12 @@ export default function HomeScreen() {
         </ScrollView>
       </SafeAreaView>
     </View>
+    </AetherScreen>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg.deep },
-  bloomGold: { position: 'absolute', top: -90, left: -70, width: 320, height: 320, borderRadius: 160, backgroundColor: COLORS.accent.bloomGold, opacity: 0.11 },
-  bloomRose: { position: 'absolute', bottom: 20, right: -100, width: 300, height: 300, borderRadius: 150, backgroundColor: COLORS.accent.bloomRose, opacity: 0.09 },
-  bloomChampagne: { position: 'absolute', top: 120, right: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: COLORS.accent.champagne, opacity: 0.06 },
+  root: { flex: 1 },
   safe: { flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
 

@@ -11,3 +11,4 @@ python-multipart==0.0.22
 starlette==0.37.2
 anyio==4.13.0
 httpx==0.28.1
+Pillow==11.1.0

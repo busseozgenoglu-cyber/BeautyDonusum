@@ -6,6 +6,7 @@ import { useLang } from '../../src/context/LanguageContext';
 import { COLORS, FONT, SPACING, RADIUS } from '../../src/utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../src/utils/api';
+import { AetherScreen } from '../../src/components/AetherScreen';
 
 export default function HistoryScreen() {
   const { t } = useLang();
@@ -49,25 +50,27 @@ export default function HistoryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>{t('history')}</Text>
-      <FlatList data={analyses} keyExtractor={(item) => item.analysis_id} renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand.primary} />}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="scan-outline" size={48} color={COLORS.text.tertiary} />
-            <Text style={styles.emptyTitle}>{t('noAnalysis')}</Text>
-            <Text style={styles.emptyDesc}>{t('startFirst')}</Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+    <AetherScreen>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>{t('history')}</Text>
+        <FlatList data={analyses} keyExtractor={(item) => item.analysis_id} renderItem={renderItem}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.brand.primary} />}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="scan-outline" size={48} color={COLORS.text.tertiary} />
+              <Text style={styles.emptyTitle}>{t('noAnalysis')}</Text>
+              <Text style={styles.emptyDesc}>{t('startFirst')}</Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </AetherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg.primary },
+  container: { flex: 1 },
   title: { ...FONT.h2, color: COLORS.text.primary, paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.md },
   list: { paddingHorizontal: SPACING.lg, paddingBottom: 20 },
   card: { backgroundColor: COLORS.surface.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: 12, borderWidth: 1, borderColor: COLORS.surface.glassBorder },

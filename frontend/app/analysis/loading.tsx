@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT, RADIUS } from '../../src/utils/theme';
@@ -9,12 +9,10 @@ import Animated, {
   withRepeat, withTiming, withSequence, withDelay,
   interpolate, Easing,
 } from 'react-native-reanimated';
-import api, { setToken } from '../../src/utils/api';
+import api, { getToken } from '../../src/utils/api';
 import { pendingPhotoStore } from '../../src/utils/pendingPhotoStore';
 import { useAuth } from '../../src/context/AuthContext';
-import * as SecureStore from 'expo-secure-store';
-
-const { width: W } = Dimensions.get('window');
+import { AetherScreen } from '../../src/components/AetherScreen';
 
 function Ring({ index }: { index: number }) {
   const anim = useSharedValue(0);
@@ -76,7 +74,7 @@ const STEPS = [
 export default function LoadingScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const router = useRouter();
-  const { autoLogin, user } = useAuth();
+  const { autoLogin } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState('');
   const cancelled = useRef(false);
@@ -85,13 +83,16 @@ export default function LoadingScreen() {
     cancelled.current = false;
     const run = async () => {
       try {
-        // Token yoksa önce auth sağla
-        const existingToken = await SecureStore.getItemAsync('auth_token');
+        const existingToken = await getToken();
         if (!existingToken) {
           await autoLogin();
         }
 
-        const photoBase64 = pendingPhotoStore.photo ?? 'placeholder_photo_data';
+        const photoBase64 = pendingPhotoStore.photo;
+        if (!photoBase64 || photoBase64.length < 80) {
+          setError('Fotoğraf bulunamadı. Lütfen tekrar çekin veya galeriden seçin.');
+          return;
+        }
         setStep(0); await delay(800);
         if (cancelled.current) return;
 
@@ -119,14 +120,16 @@ export default function LoadingScreen() {
     };
     run();
     return () => { cancelled.current = true; };
-  }, []);
+  }, [category]);
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
   return (
-    <View style={styles.root}>
-      <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={8} />
-      <LinearGradient colors={['rgba(6,6,12,0.85)', 'rgba(10,10,20,0.9)', 'rgba(6,6,12,0.85)']} style={StyleSheet.absoluteFill} />
+    <AetherScreen>
+      <View style={[StyleSheet.absoluteFill, { opacity: 0.35 }]} pointerEvents="none">
+        <Image source={require('../../assets/images/analysis-bg.png')} style={StyleSheet.absoluteFillObject} blurRadius={14} />
+      </View>
+      <LinearGradient colors={['rgba(8,6,4,0.88)', 'rgba(6,5,10,0.92)', 'rgba(5,4,8,0.9)']} style={StyleSheet.absoluteFill} />
       <View style={styles.ambientGlow} />
 
       <SafeAreaView style={styles.container}>
@@ -180,7 +183,7 @@ export default function LoadingScreen() {
           </View>
         ) : null}
       </SafeAreaView>
-    </View>
+    </AetherScreen>
   );
 }
 
@@ -189,7 +192,6 @@ function delay(ms: number) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg.primary },
   ambientGlow: {
     position: 'absolute', width: 400, height: 400,
     borderRadius: 200, backgroundColor: 'rgba(229,192,123,0.05)',

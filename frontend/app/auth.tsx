@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { AetherScreen } from '../src/components/AetherScreen';
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -55,12 +56,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={s.root}>
-      <LinearGradient colors={[COLORS.bg.canvas, COLORS.bg.deep, '#050508']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-      <View style={s.bloomGold} />
-      <View style={s.bloomRose} />
-      <View style={s.bloomChampagne} />
-
+    <AetherScreen>
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.flex}>
           <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -154,15 +150,11 @@ export default function AuthScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </View>
+    </AetherScreen>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1 },
-  bloomGold: { position: 'absolute', top: -70, left: -50, width: 280, height: 280, borderRadius: 140, backgroundColor: COLORS.accent.bloomGold, opacity: 0.11 },
-  bloomRose: { position: 'absolute', bottom: -30, right: -70, width: 240, height: 240, borderRadius: 120, backgroundColor: COLORS.accent.bloomRose, opacity: 0.09 },
-  bloomChampagne: { position: 'absolute', top: 140, right: -30, width: 160, height: 160, borderRadius: 80, backgroundColor: COLORS.accent.champagne, opacity: 0.05 },
   safe: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 24, justifyContent: 'center', paddingVertical: 40 },

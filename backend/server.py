@@ -18,6 +18,12 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 from typing import Optional
 from pathlib import Path
+from io import BytesIO
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # type: ignore
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -156,8 +162,147 @@ class SessionRequest(BaseModel):
 class SubscriptionActivate(BaseModel):
     plan: str = "premium"
 
+
 class LanguagePref(BaseModel):
     language: str
+
+
+MIN_PHOTO_B64_LEN = 80
+PLACEHOLDER_MARKERS = ("placeholder", "fake", "test_empty")
+
+
+def _normalize_base64_input(raw: str) -> str:
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    if "base64," in s:
+        s = s.split("base64,", 1)[-1].strip()
+    return s.replace("\n", "").replace("\r", "")
+
+
+def _validate_photo_base64(photo_base64: str) -> None:
+    b64 = _normalize_base64_input(photo_base64)
+    if len(b64) < MIN_PHOTO_B64_LEN:
+        raise HTTPException(status_code=400, detail="Geçerli bir fotoğraf yükleyin (çok kısa veya boş veri)")
+    head = b64[:120].lower()
+    if any(m in head for m in PLACEHOLDER_MARKERS):
+        raise HTTPException(status_code=400, detail="Geçersiz fotoğraf verisi — lütfen kameradan veya galeriden seçin")
+
+
+def _decode_user_photo_bytes(photo_base64: str) -> tuple[bytes, str]:
+    b64 = _normalize_base64_input(photo_base64)
+    try:
+        raw = base64.b64decode(b64, validate=False)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Fotoğraf kodu okunamadı")
+    if len(raw) < 32:
+        raise HTTPException(status_code=400, detail="Fotoğraf dosyası bozuk veya çok küçük")
+    mime = "image/jpeg"
+    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+        mime = "image/png"
+    elif raw[:2] == b"\xff\xd8":
+        mime = "image/jpeg"
+    elif raw[:4] == b"RIFF" and len(raw) > 12 and raw[8:12] == b"WEBP":
+        mime = "image/webp"
+    return raw, mime
+
+
+def _prepare_edit_image_bytes(raw_bytes: bytes, mime: str) -> tuple[bytes, str]:
+    if Image is None:
+        return raw_bytes, mime
+    try:
+        img = Image.open(BytesIO(raw_bytes))
+        if img.mode not in ("RGB", "RGBA"):
+            if img.mode in ("P", "LA", "PA"):
+                img = img.convert("RGBA")
+            else:
+                img = img.convert("RGB")
+        max_side = 1024
+        w, h = img.size
+        if max(w, h) > max_side:
+            ratio = max_side / max(w, h)
+            img = img.resize((max(1, int(w * ratio)), max(1, int(h * ratio))), Image.Resampling.LANCZOS)
+        buf = BytesIO()
+        if img.mode == "RGBA":
+            bg = Image.new("RGB", img.size, (18, 16, 14))
+            bg.paste(img, mask=img.split()[3])
+            img = bg
+        else:
+            img = img.convert("RGB")
+        img.save(buf, format="PNG", optimize=True)
+        out = buf.getvalue()
+        if len(out) > 3_800_000:
+            buf2 = BytesIO()
+            img.save(buf2, format="JPEG", quality=88, optimize=True)
+            return buf2.getvalue(), "image/jpeg"
+        return out, "image/png"
+    except Exception as e:
+        logger.warning(f"PIL prepare skipped: {e}")
+        return raw_bytes, mime
+
+
+async def _openai_image_edits(api_key: str, image_bytes: bytes, filename: str, prompt: str) -> Optional[str]:
+    edit_model = os.environ.get("OPENAI_IMAGE_EDIT_MODEL", "gpt-image-1")
+    try:
+        import httpx
+        files = {"image": (filename, image_bytes, "application/octet-stream")}
+        data = {
+            "model": edit_model,
+            "prompt": prompt,
+            "n": "1",
+            "size": "1024x1024",
+            "response_format": "b64_json",
+        }
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/images/edits",
+                headers={"Authorization": f"Bearer {api_key}"},
+                files=files,
+                data=data,
+            )
+        if not resp.is_success:
+            logger.error(f"OpenAI edits HTTP {resp.status_code}: {resp.text[:600]}")
+            return None
+        body = resp.json()
+        item = (body.get("data") or [{}])[0]
+        b64 = item.get("b64_json")
+        if b64:
+            return b64
+        url = item.get("url")
+        if url:
+            async with httpx.AsyncClient(timeout=60) as client:
+                r2 = await client.get(url)
+            if r2.is_success:
+                return base64.b64encode(r2.content).decode("ascii")
+    except Exception as e:
+        logger.error(f"OpenAI edits exception: {e}")
+    return None
+
+
+async def _openai_image_generations(api_key: str, prompt: str) -> Optional[str]:
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=90) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/images/generations",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "dall-e-3",
+                    "prompt": prompt,
+                    "n": 1,
+                    "size": "1024x1024",
+                    "response_format": "b64_json",
+                    "quality": "standard",
+                },
+            )
+        if not resp.is_success:
+            logger.error(f"DALL-E HTTP {resp.status_code}: {resp.text[:400]}")
+            return None
+        return resp.json()["data"][0]["b64_json"]
+    except Exception as e:
+        logger.error(f"DALL-E exception: {e}")
+        return None
+
 
 # ==================== AUTH ENDPOINTS ====================
 
@@ -440,6 +585,7 @@ async def create_analysis(data: AnalysisCreate, request: Request):
     user = await get_current_user(request)
     if data.category not in ("cerrahi", "medikal"):
         raise HTTPException(status_code=400, detail="Geçersiz kategori")
+    _validate_photo_base64(data.photo_base64)
     metrics = await analyze_face_with_ai(data.photo_base64, data.category)
     analysis_id = str(uuid.uuid4())
     doc = {
@@ -523,38 +669,50 @@ async def generate_transformation(analysis_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Analiz bulunamadı")
     recs = analysis.get("recommendations") or {}
     rec_list = recs.get("recommendations", [])
-    improvements = ", ".join([r.get("title", "") for r in rec_list[:4]])
+    improvements = ", ".join([r.get("title", "") for r in rec_list[:4]]) or "genel estetik iyileştirme"
     category = analysis.get("category", "medikal")
     cat_label = "cerrahi estetik" if category == "cerrahi" else "medikal estetik"
-    prompt = (
+    full_photo = analysis.get("full_photo") or ""
+    api_key = OPENAI_API_KEY or EMERGENT_LLM_KEY
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Görsel üretimi için API anahtarı gerekli")
+
+    intensity = "subtle"
+    try:
+        j = await request.json()
+        if isinstance(j, dict) and j.get("intensity") in ("subtle", "bold"):
+            intensity = j["intensity"]
+    except Exception:
+        pass
+    style_hint = "Very subtle, barely noticeable changes" if intensity == "subtle" else "Visible but still natural enhancements"
+    edit_prompt = (
+        f"Edit this exact same person's portrait to show realistic results after {cat_label} procedures: {improvements}. "
+        f"Intensity: {style_hint}. "
+        "Keep identity, pose, lighting and background recognizable. Natural skin texture, no cartoon, no extra people. "
+        "Small corner text: AI Simulation."
+    )
+    gen_prompt = (
         f"A professional beauty portrait photo showing ideal results after {cat_label} aesthetic procedures. "
         f"Enhancements applied: {improvements}. "
         "Natural, photorealistic appearance. Soft studio lighting. Subtle 'AI Simulation' watermark in the corner. "
         "High quality professional headshot."
     )
-    api_key = OPENAI_API_KEY or EMERGENT_LLM_KEY
-    if not api_key:
-        raise HTTPException(status_code=503, detail="Görsel üretimi için API anahtarı gerekli")
+
+    img_b64: Optional[str] = None
     try:
-        import httpx
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(
-                "https://api.openai.com/v1/images/generations",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={
-                    "model": "dall-e-3",
-                    "prompt": prompt,
-                    "n": 1,
-                    "size": "1024x1024",
-                    "response_format": "b64_json",
-                    "quality": "standard",
-                }
-            )
-        if not resp.is_success:
-            logger.error(f"DALL-E hatası: {resp.status_code} {resp.text[:400]}")
-            raise HTTPException(status_code=500, detail="Görsel üretilemedi")
-        img_b64 = resp.json()["data"][0]["b64_json"]
-        await db.analyses.update_one({"analysis_id": analysis_id}, {"$set": {"transformation_base64": img_b64, "is_unlocked": True}})
+        if full_photo and len(_normalize_base64_input(full_photo)) >= MIN_PHOTO_B64_LEN:
+            raw_bytes, mime = _decode_user_photo_bytes(full_photo)
+            prepared, out_mime = _prepare_edit_image_bytes(raw_bytes, mime)
+            fname = "photo.png" if out_mime == "image/png" else "photo.jpg"
+            img_b64 = await _openai_image_edits(api_key, prepared, fname, edit_prompt)
+        if not img_b64:
+            img_b64 = await _openai_image_generations(api_key, gen_prompt)
+        if not img_b64:
+            raise HTTPException(status_code=502, detail="Görsel üretimi başarısız — lütfen tekrar deneyin")
+        await db.analyses.update_one(
+            {"analysis_id": analysis_id},
+            {"$set": {"transformation_base64": img_b64, "is_unlocked": True}},
+        )
         return {"transformation_base64": img_b64, "status": "completed"}
     except HTTPException:
         raise
@@ -578,6 +736,26 @@ async def get_analysis(analysis_id: str, request: Request):
     if not analysis:
         raise HTTPException(status_code=404, detail="Analiz bulunamadı")
     return analysis
+
+
+@api_router.get("/analysis/{analysis_id}/photo")
+async def get_analysis_photo(analysis_id: str, request: Request):
+    """Original uploaded photo as JPEG data URL (no large field on main GET)."""
+    user = await get_current_user(request)
+    doc = await db.analyses.find_one({"analysis_id": analysis_id, "user_id": user["user_id"]}, {"_id": 0, "full_photo": 1})
+    if not doc or not doc.get("full_photo"):
+        raise HTTPException(status_code=404, detail="Fotoğraf bulunamadı")
+    b64 = _normalize_base64_input(doc["full_photo"])
+    if len(b64) < MIN_PHOTO_B64_LEN:
+        raise HTTPException(status_code=404, detail="Fotoğraf bulunamadı")
+    mime = "image/jpeg"
+    try:
+        raw = base64.b64decode(b64, validate=False)
+        if raw[:8] == b"\x89PNG\r\n\x1a\n":
+            mime = "image/png"
+    except Exception:
+        pass
+    return {"photo_data_url": f"data:{mime};base64,{b64}"}
 
 @api_router.get("/analysis/{analysis_id}/full")
 async def get_analysis_full(analysis_id: str, request: Request):

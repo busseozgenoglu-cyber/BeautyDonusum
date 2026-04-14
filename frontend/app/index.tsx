@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay,
   withRepeat, withSequence, interpolate, Easing,
 } from 'react-native-reanimated';
+import { AetherScreen } from '../src/components/AetherScreen';
 
 function Ring({ delay, size }: { delay: number; size: number }) {
   const a = useSharedValue(0);
@@ -60,8 +61,9 @@ export default function SplashScreen() {
   const subStyle = useAnimatedStyle(() => ({ opacity: subO.value }));
 
   return (
+    <AetherScreen>
     <View style={styles.root}>
-      <LinearGradient colors={['#0D0900', '#0A0A0C', '#080810']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
+      <LinearGradient colors={['rgba(12,8,4,0.5)', 'rgba(8,6,12,0.35)', 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
 
       {/* Big ambient blooms */}
       <View style={styles.bloomTL} />
@@ -90,6 +92,7 @@ export default function SplashScreen() {
 
       <Text style={styles.disc}>{t('disclaimer')}</Text>
     </View>
+    </AetherScreen>
   );
 }
 

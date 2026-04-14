@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://beautydonusu
 
 const api = axios.create({ baseURL: `${BACKEND_URL}/api`, timeout: 120000 });
 
-async function getToken(): Promise<string | null> {
+export async function getToken(): Promise<string | null> {
   try {
     if (Platform.OS === 'web') {
       return typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;

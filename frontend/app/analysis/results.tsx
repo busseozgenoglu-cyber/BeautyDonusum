@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Image, Alert, ActivityIndicator,
+  PanResponder, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,6 +16,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import api from '../../src/utils/api';
 import { purchasePremium } from '../../src/utils/purchases';
+import { AetherScreen } from '../../src/components/AetherScreen';
+import { toImageDataUri } from '../../src/utils/imageDataUri';
 
 const METRIC_LABELS: Record<string, string> = {
   symmetry_score: 'Simetri', jawline_definition: 'Çene Hattı',
@@ -121,9 +124,118 @@ const rStyles = StyleSheet.create({
   lockText: { ...FONT.small, color: COLORS.brand.primary },
 });
 
+function BeforeAfterSlider({
+  beforeUri,
+  afterUri,
+  height,
+}: {
+  beforeUri: string;
+  afterUri: string;
+  height: number;
+}) {
+  const wrapRef = useRef<View>(null);
+  const [layoutW, setLayoutW] = useState(0);
+  const windowX = useRef(0);
+  const split = useRef(0.5);
+  const [, bump] = useState(0);
+
+  const updateSplitFromPageX = useCallback((pageX: number) => {
+    const w = layoutW || 1;
+    const rel = pageX - windowX.current;
+    split.current = Math.max(0.06, Math.min(0.94, rel / w));
+    bump((n) => n + 1);
+  }, [layoutW]);
+
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (e) => {
+          updateSplitFromPageX(e.nativeEvent.pageX);
+        },
+        onPanResponderMove: (e) => {
+          updateSplitFromPageX(e.nativeEvent.pageX);
+        },
+      }),
+    [updateSplitFromPageX]
+  );
+
+  const w = layoutW || 1;
+  const clip = w * split.current;
+
+  return (
+    <View
+      ref={wrapRef}
+      style={[baStyles.wrap, { height }]}
+      onLayout={() => {
+        wrapRef.current?.measureInWindow((x, _y, width) => {
+          windowX.current = x;
+          if (width > 0) setLayoutW(width);
+        });
+      }}
+      {...pan.panHandlers}
+    >
+      <Image source={{ uri: afterUri }} style={baStyles.full} resizeMode="cover" />
+      <View style={[baStyles.clip, { width: clip }]}>
+        <Image source={{ uri: beforeUri }} style={[baStyles.beforeImg, { width: w }]} resizeMode="cover" />
+      </View>
+      <View style={[baStyles.handleCol, { left: clip - 18 }]} pointerEvents="none">
+        <View style={baStyles.handleKnob}>
+          <Ionicons name="resize" size={14} color="#1a1208" />
+        </View>
+      </View>
+      <View style={baStyles.labelsRow} pointerEvents="none">
+        <Text style={baStyles.labelMini}>Önce</Text>
+        <Text style={baStyles.labelMini}>Sonra</Text>
+      </View>
+    </View>
+  );
+}
+
+const baStyles = StyleSheet.create({
+  wrap: {
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    backgroundColor: '#0a0a0a',
+    borderWidth: 1,
+    borderColor: 'rgba(229,192,123,0.2)',
+  },
+  full: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, width: '100%', height: '100%' },
+  clip: { position: 'absolute', left: 0, top: 0, bottom: 0, overflow: 'hidden' },
+  beforeImg: { height: '100%' },
+  handleCol: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  handleKnob: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.35)',
+  },
+  labelsRow: {
+    position: 'absolute',
+    bottom: 10,
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  labelMini: { ...FONT.xs, color: 'rgba(255,255,255,0.75)', fontFamily: 'Outfit_600SemiBold' },
+});
+
 export default function ResultsScreen() {
   const { analysisId } = useLocalSearchParams<{ analysisId: string }>();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useLang();
   const router = useRouter();
   const [analysis, setAnalysis] = useState<any>(null);
@@ -132,21 +244,44 @@ export default function ResultsScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [displayScore, setDisplayScore] = useState(0);
+  const [photoOriginalUri, setPhotoOriginalUri] = useState<string | null>(null);
+  const [transformIntensity, setTransformIntensity] = useState<'subtle' | 'bold'>('subtle');
+  const autoTransformStarted = useRef(false);
   const isPremium = user?.subscription === 'premium';
 
+  const loadAnalysis = useCallback(async () => {
+    if (!analysisId) return;
+    try {
+      const { data: me } = await api.get('/auth/me');
+      const premium = me?.subscription === 'premium';
+      const { data } = await api.get(`/analysis/${analysisId}`);
+      setAnalysis(data);
+      if (!premium && !data.is_unlocked) setShowPaywall(true);
+      else setShowPaywall(false);
+    } catch {
+      Alert.alert('Hata', 'Analiz yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
+  }, [analysisId]);
+
   useEffect(() => {
-    const fetch = async () => {
+    setLoading(true);
+    loadAnalysis();
+  }, [loadAnalysis]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!analysisId) return;
       try {
-        const { data } = await api.get(`/analysis/${analysisId}`);
-        setAnalysis(data);
-        if (!isPremium && !data.is_unlocked) setShowPaywall(true);
+        const { data } = await api.get(`/analysis/${analysisId}/photo`);
+        if (!cancelled && data?.photo_data_url) setPhotoOriginalUri(data.photo_data_url);
       } catch {
-        Alert.alert('Hata', 'Analiz yüklenemedi');
-      } finally {
-        setLoading(false);
+        if (!cancelled) setPhotoOriginalUri(null);
       }
-    };
-    if (analysisId) fetch();
+    })();
+    return () => { cancelled = true; };
   }, [analysisId]);
 
   // Animated score counter
@@ -169,14 +304,46 @@ export default function ResultsScreen() {
     return () => clearInterval(iv);
   }, [analysis]);
 
+  const runTransform = useCallback(async () => {
+    if (!analysisId) return;
+    setTransforming(true);
+    try {
+      const { data } = await api.post(`/analysis/${analysisId}/transform`, { intensity: transformIntensity });
+      const b64 = data?.transformation_base64;
+      if (!b64 || String(b64).length < 50) {
+        Alert.alert('Hata', 'Sunucu boş görsel döndürdü. Tekrar deneyin.');
+        return;
+      }
+      setAnalysis((prev: any) => ({ ...prev, transformation_base64: b64, is_unlocked: true }));
+    } catch (e: any) {
+      const d = e.response?.data?.detail;
+      Alert.alert('Hata', typeof d === 'string' ? d : 'Dönüşüm oluşturulamadı');
+    } finally {
+      setTransforming(false);
+    }
+  }, [analysisId, transformIntensity]);
+
+  // Premium: auto-generate simulation once when result has no transform yet
+  useEffect(() => {
+    if (!analysis || !analysisId) return;
+    if (!isPremium) return;
+    if (analysis.transformation_base64) return;
+    if (autoTransformStarted.current) return;
+    autoTransformStarted.current = true;
+    runTransform();
+  }, [analysis, analysisId, isPremium, runTransform]);
+
   const handleUpgrade = async () => {
     setPurchasing(true);
     try {
       const isPremiumNow = await purchasePremium();
       if (isPremiumNow) {
         await api.post('/subscription/activate', { plan: 'premium' });
+        await refreshUser();
         setShowPaywall(false);
-        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi.');
+        autoTransformStarted.current = false;
+        Alert.alert('Tebrikler!', 'Premium aboneliğiniz aktif edildi. AI dönüşüm oluşturuluyor…');
+        await loadAnalysis();
       }
     } catch (e: any) {
       if (e?.userCancelled) return;
@@ -188,20 +355,33 @@ export default function ResultsScreen() {
 
   const handleTransform = async () => {
     if (!isPremium) { setShowPaywall(true); return; }
-    setTransforming(true);
-    try {
-      const { data } = await api.post(`/analysis/${analysisId}/transform`);
-      setAnalysis((prev: any) => ({ ...prev, transformation_base64: data.transformation_base64 }));
-    } catch (e: any) {
-      Alert.alert('Hata', e.response?.data?.detail || 'Dönüşüm oluşturulamadı');
-    } finally { setTransforming(false); }
+    autoTransformStarted.current = true;
+    await runTransform();
   };
+
+  const handleShareInsight = async () => {
+    const summary = analysis?.recommendations?.summary || '';
+    try {
+      await Share.share({
+        title: t('appName'),
+        message: `${t('appName')} — ${t('yourScore')}: ${displayScore.toFixed(1)}/10\n${summary}`.slice(0, 2800),
+      });
+    } catch { /* user dismissed */ }
+  };
+
+  const afterUri = useMemo(
+    () => toImageDataUri(analysis?.transformation_base64),
+    [analysis?.transformation_base64]
+  );
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.brand.primary} />
-      </View>
+      <AetherScreen>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.brand.primary} />
+          <Text style={styles.loadingHint}>{t('analyzing')}</Text>
+        </View>
+      </AetherScreen>
     );
   }
 
@@ -210,10 +390,7 @@ export default function ResultsScreen() {
   const recList: any[] = recs.recommendations || [];
 
   return (
-    <View style={styles.root}>
-      <LinearGradient colors={['#0A0A0A', '#0D0D0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-      <View style={styles.glowTop} />
-
+    <AetherScreen>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
@@ -221,7 +398,9 @@ export default function ResultsScreen() {
             <Ionicons name="arrow-back" size={22} color={COLORS.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('analysisComplete')}</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity testID="share-insight-btn" onPress={handleShareInsight} style={styles.headerIconBtn}>
+            <Ionicons name="share-outline" size={20} color={COLORS.brand.primary} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -339,16 +518,39 @@ export default function ResultsScreen() {
             ))}
           </Animated.View>
 
-          {/* Before / After */}
+          {/* Before / After — slider + intensity */}
           <Animated.View entering={FadeInDown.delay(450).duration(400)} style={styles.section}>
             <Text style={styles.sectionTitle}>{t('beforeAfter')}</Text>
-            {analysis?.transformation_base64 ? (
+            {isPremium && !analysis?.transformation_base64 && !transforming ? (
+              <View style={styles.intensityRow}>
+                <Text style={styles.intensityLabel}>Etki</Text>
+                <View style={styles.intensityPills}>
+                  {(['subtle', 'bold'] as const).map((k) => (
+                    <TouchableOpacity
+                      key={k}
+                      testID={`intensity-${k}`}
+                      onPress={() => setTransformIntensity(k)}
+                      style={[styles.intensityPill, transformIntensity === k && styles.intensityPillOn]}
+                    >
+                      <Text style={[styles.intensityPillTxt, transformIntensity === k && styles.intensityPillTxtOn]}>
+                        {k === 'subtle' ? 'Doğal' : 'Belirgin'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {afterUri && photoOriginalUri ? (
               <View style={styles.transformCard}>
-                <Image
-                  source={{ uri: `data:image/png;base64,${analysis.transformation_base64}` }}
-                  style={styles.transformImage}
-                  resizeMode="cover"
-                />
+                <BeforeAfterSlider beforeUri={photoOriginalUri} afterUri={afterUri} height={340} />
+                <View style={styles.simBadge}>
+                  <Ionicons name="sparkles" size={11} color={COLORS.brand.primary} />
+                  <Text style={styles.simText}>{t('aiSimulation')}</Text>
+                </View>
+              </View>
+            ) : afterUri ? (
+              <View style={styles.transformCard}>
+                <Image source={{ uri: afterUri }} style={styles.transformImage} resizeMode="cover" />
                 <View style={styles.simBadge}>
                   <Ionicons name="sparkles" size={11} color={COLORS.brand.primary} />
                   <Text style={styles.simText}>{t('aiSimulation')}</Text>
@@ -360,6 +562,7 @@ export default function ResultsScreen() {
                 onPress={handleTransform}
                 activeOpacity={0.85}
                 style={styles.transformPlaceholder}
+                disabled={transforming}
               >
                 {transforming ? (
                   <View style={styles.transformLoadingRow}>
@@ -377,13 +580,18 @@ export default function ResultsScreen() {
                       color={isPremium ? COLORS.brand.primary : COLORS.text.tertiary}
                     />
                     <Text style={[styles.transformPlaceholderText, isPremium && { color: COLORS.brand.primary }]}>
-                      {isPremium ? 'AI Dönüşüm Oluştur' : 'Premium ile AI Dönüşüm'}
+                      {isPremium ? 'Dönüşümü yeniden oluştur' : 'Premium ile AI Dönüşüm'}
                     </Text>
-                    {!isPremium && <Text style={styles.transformSubText}>Önce ve sonra simülasyonu</Text>}
+                    {!isPremium && <Text style={styles.transformSubText}>Kaydırmalı önce / sonra simülasyonu</Text>}
                   </LinearGradient>
                 )}
               </TouchableOpacity>
             )}
+            {isPremium && analysis?.transformation_base64 ? (
+              <TouchableOpacity testID="regenerate-transform-btn" style={styles.secondaryTransformBtn} onPress={handleTransform} disabled={transforming}>
+                <Text style={styles.secondaryTransformTxt}>{transforming ? t('generating') : 'Farklı yoğunlukla yeniden oluştur'}</Text>
+              </TouchableOpacity>
+            ) : null}
           </Animated.View>
 
           {/* Disclaimer */}
@@ -555,7 +763,10 @@ export default function ResultsScreen() {
                 <TouchableOpacity
                   onPress={async () => {
                     await api.post('/subscription/activate', { plan: 'premium' });
+                    await refreshUser();
                     setShowPaywall(false);
+                    autoTransformStarted.current = false;
+                    await loadAnalysis();
                   }}
                   style={styles.devBypass}
                 >
@@ -582,24 +793,20 @@ export default function ResultsScreen() {
           </ScrollView>
         </View>
       )}
-    </View>
+    </AetherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg.primary },
-  loadingContainer: { flex: 1, backgroundColor: COLORS.bg.primary, alignItems: 'center', justifyContent: 'center' },
-  glowTop: {
-    position: 'absolute', top: -80, right: -80,
-    width: 300, height: 300, borderRadius: 150,
-    backgroundColor: 'rgba(229,192,123,0.06)',
-  },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  loadingHint: { ...FONT.small, color: COLORS.text.tertiary },
   safeArea: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg, paddingVertical: 14,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.05)' },
+  headerIconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: 'rgba(229,192,123,0.1)', borderWidth: 1, borderColor: 'rgba(229,192,123,0.22)' },
   headerTitle: { ...FONT.h4, color: COLORS.text.primary },
   scroll: { paddingHorizontal: SPACING.lg, paddingBottom: 48 },
 
@@ -641,6 +848,15 @@ const styles = StyleSheet.create({
   },
 
   // Transform
+  intensityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  intensityLabel: { ...FONT.xs, color: COLORS.text.tertiary, fontFamily: 'Outfit_600SemiBold' },
+  intensityPills: { flexDirection: 'row', gap: 8 },
+  intensityPill: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
+  intensityPillOn: { borderColor: 'rgba(229,192,123,0.45)', backgroundColor: 'rgba(229,192,123,0.12)' },
+  intensityPillTxt: { ...FONT.xs, color: COLORS.text.tertiary, fontFamily: 'Outfit_500Medium' },
+  intensityPillTxtOn: { color: COLORS.brand.primary },
+  secondaryTransformBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 12 },
+  secondaryTransformTxt: { ...FONT.small, color: COLORS.brand.primary, textDecorationLine: 'underline', fontFamily: 'Outfit_600SemiBold' },
   transformCard: { borderRadius: RADIUS.xl, overflow: 'hidden' },
   transformImage: { width: '100%', height: 340 },
   simBadge: {

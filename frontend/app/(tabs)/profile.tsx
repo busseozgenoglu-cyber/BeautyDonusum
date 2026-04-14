@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { purchasePremium, restorePurchases } from '../../src/utils/purchases';
 import api from '../../src/utils/api';
+import { AetherScreen } from '../../src/components/AetherScreen';
 
 export default function ProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
   const toggleLang = () => setLang(lang === 'tr' ? 'en' : 'tr');
 
   return (
+    <AetherScreen>
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t('profile')}</Text>
@@ -170,11 +172,12 @@ export default function ProfileScreen() {
         </Text>
       </ScrollView>
     </SafeAreaView>
+    </AetherScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg.primary },
+  container: { flex: 1 },
   scroll: { padding: SPACING.lg, paddingBottom: 40 },
   title: { ...FONT.h2, color: COLORS.text.primary, marginBottom: 24 },
   profileCard: {
