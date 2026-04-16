@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-image.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0A0A"
+      "backgroundColor": "#040B12"
     },
     "ios": {
       "supportsTablet": false,
@@ -31,7 +31,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0A0A0A"
+        "backgroundColor": "#040B12"
       },
       "package": "com.beautydonusum.app",
       "versionCode": 2,
