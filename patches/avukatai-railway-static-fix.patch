@@ -1,0 +1,110 @@
+From a27305b2b522cb71b2017c1e437f49633f78ed64 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Tue, 28 Apr 2026 11:17:34 +0000
+Subject: [PATCH] fix: Railway static assets, trust proxy, and Nixpacks build
+
+- Set trust proxy for express-rate-limit behind Railway reverse proxy
+- Serve Vite client/build with explicit JS/CSS Content-Type headers
+- Avoid sending index.html for missing /assets/* (prevents JSON/MIME confusion)
+- Add nixpacks.toml so deploy runs npm run build and produces client/build
+- Allow CORS for RAILWAY_PUBLIC_DOMAIN when FRONTEND_URL is unset
+---
+ nixpacks.toml    |  4 ++++
+ server/server.js | 48 +++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 47 insertions(+), 5 deletions(-)
+ create mode 100644 nixpacks.toml
+
+diff --git a/nixpacks.toml b/nixpacks.toml
+new file mode 100644
+index 0000000..c386a39
+--- /dev/null
++++ b/nixpacks.toml
+@@ -0,0 +1,4 @@
++# Railway (Nixpacks): client/build üretimi (NODE_ENV burada production yapılmaz;
++# aksi halde npm devDependencies atlanır ve Vite build çalışmaz.)
++[phases.build]
++cmds = ["npm run build"]
+diff --git a/server/server.js b/server/server.js
+index d34263d..1edbbe6 100644
+--- a/server/server.js
++++ b/server/server.js
+@@ -11,6 +11,7 @@ const mongoSanitize = require('express-mongo-sanitize');
+ const xss = require('xss-clean');
+ const hpp = require('hpp');
+ const path = require('path');
++const fs = require('fs');
+ require('dotenv').config();
+ 
+ const connectDB = require('./config/database');
+@@ -30,6 +31,9 @@ const templateRoutes = require('./routes/templateRoutes');
+ const app = express();
+ const PORT = process.env.PORT || 5000;
+ 
++// Railway / reverse proxy: rate-limit ve IP doğru çalışsın (aksi halde 500)
++app.set('trust proxy', 1);
++
+ // Veritabanı bağlantısı
+ connectDB();
+ 
+@@ -45,6 +49,9 @@ const allowedOrigins = [
+   'http://localhost:3000',
+   'http://localhost:5000',
+ ];
++if (process.env.RAILWAY_PUBLIC_DOMAIN) {
++  allowedOrigins.push(`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
++}
+ 
+ app.use(cors({
+   origin: function (origin, callback) {
+@@ -99,12 +106,43 @@ app.use('/api/ai', aiRoutes);
+ app.use('/api/payment', paymentRoutes);
+ app.use('/api/templates', templateRoutes);
+ 
+-// Production: React build dosyalarını sun
+-if (process.env.NODE_ENV === 'production') {
+-  app.use(express.static(path.join(__dirname, '../client/build')));
++// Production: Vite build (client/build) — önce statik, sonra SPA; /assets yoksa index.html gönderme
++const clientBuildPath = path.join(__dirname, '../client/build');
+ 
+-  app.get('*', (req, res) => {
+-    res.sendFile(path.resolve(__dirname, '../client/build/index.html'));
++if (process.env.NODE_ENV === 'production') {
++  if (!fs.existsSync(path.join(clientBuildPath, 'index.html'))) {
++    console.error(
++      '[AvukatAI] Üretim için client/build bulunamadı. Deploy aşamasında "npm run build" çalıştığından emin olun.',
++    );
++  }
++
++  app.use(
++    express.static(clientBuildPath, {
++      index: false,
++      fallthrough: true,
++      maxAge: '1h',
++      setHeaders(res, filePath) {
++        if (filePath.endsWith('.js')) {
++          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
++        } else if (filePath.endsWith('.css')) {
++          res.setHeader('Content-Type', 'text/css; charset=utf-8');
++        }
++      },
++    }),
++  );
++
++  app.get('*', (req, res, next) => {
++    if (req.path.startsWith('/api')) {
++      return next();
++    }
++    // Eksik chunk: index.html veya JSON hata yerine net 404 (MIME karışıklığını önler)
++    if (req.path.startsWith('/assets/')) {
++      return res.status(404).type('text/plain').send('Not found');
++    }
++    const indexHtml = path.join(clientBuildPath, 'index.html');
++    res.sendFile(indexHtml, (err) => {
++      if (err) next(err);
++    });
+   });
+ } else {
+   app.get('/', (req, res) => {
+-- 
+2.43.0
+
