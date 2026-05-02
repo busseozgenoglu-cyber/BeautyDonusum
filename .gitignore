@@ -27,7 +27,5 @@ Thumbs.db
 backend/.env
 frontend/.env
 
-# Test artifacts
-.pytest_cache/
-htmlcov/
-.coverage
+# E-ticaret dışa aktarma (büyük görseller)
+export_iphone_cases/
