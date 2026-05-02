@@ -31,3 +31,6 @@ frontend/.env
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Ayrı proje: kendi GitHub deposu (iphone-case-exporter/ içinde git init)
+iphone-case-exporter/
